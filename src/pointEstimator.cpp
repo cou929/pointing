@@ -1,8 +1,3 @@
-// ~moriyama/projects/sr4000/trunk/src/pointEstimator.cpp
-// http://svn.xp-dev.com/svn/cou929_sakanelab/sr4000/trunk/src/pointEstimator.cpp
-//
-// 2009-01-30
-// Kousei MORIYAMA
 //
 // Detect direction of pointing gesture by human, and project mark.
 //
@@ -30,13 +25,11 @@ int main(void)
 {
   cameraImages *ci = new cameraImages();
   line3DCv *pointingLine = new line3DCv();
-  CvPoint fingertip2D, elbow2D, subject2D;
-  CvPoint3D32f fingertip3D, elbow3D, subject3D;
 
   coordinateShifter *cs = new coordinateShifter();
   double Tx, Ty, Tz, Rx, Ry, Rz, F;
   FILE *fp;
-  char *filename = "param.txt";
+  char *filename = "/home/2007/moriyama/projects/pointing/bin/param.txt";
   char line[100];
 
   int width = 1280;
@@ -91,6 +84,7 @@ int main(void)
   cvSetMouseCallback ("Depth", on_mouse_getDepth, ci);
   cvSetMouseCallback ("Intensity", on_mouse_pointing, ci->getDepthImg());
 
+  int counter = 1;
   while(1)
     {
       // acquire current frame
@@ -104,33 +98,31 @@ int main(void)
 	  // get human region
 	  img = human->getResult();
 
-	  // get arm points
-	  getArmPoints(img, &fingertip2D, &elbow2D);
+	  CvSize imgSize = ci->getImageSize();
 
-	  // get 3D coordinate of arm points
-	  fingertip3D = ci->getCoordinate(fingertip2D);
-	  elbow3D = ci->getCoordinate(elbow2D);
-	  if(fingertip3D.x == -1 || elbow3D.x == -1)
-	    continue;
+	  char k = cvWaitKey(10);
+	  if (k == 'c')
+	    {
+	      printf("\n\n%02d: coordinates\n", counter);
+	      for (int i=0; i<imgSize.height; i++)
+		for (int j=0; j<imgSize.width; j++)
+		  {
+		    CvScalar s;
+		    s = cvGet2D(img, i, j);
+		    if (s.val[0] != 0)
+		      {
+			CvPoint3D32f tmp = ci->getCoordinate(i, j);
+			printf("%f\t%f\t%f\n", tmp.x, tmp.y, tmp.z);
+		      }
+		  }
 
-	  // calculate pointing direction
-	  pointingLine->setLine(elbow3D, fingertip3D);
-	  if(!pointingLine->isValid())
-	    continue;
-
-	  // calculate intersection of pointing line and subject object
-	  //	  subject3D = calcCoordinateOnPanel(3500, fingertip3D, pointingLine->directionVecror);
-	  subject3D = getMarkCoord(pointingLine, ci);
-	  if (subject3D.x == -1)
-	    continue;
-
-	  // calcurate coordinate where to projector points
-	  subject2D = cs->world2img((-1)*subject3D.z, (-1)*subject3D.x, subject3D.y);
-
-	  // project mark
-	  prj->showPoint(subject2D);
-
-	  cvShowImage("Result", img);
+	      char intIamgeName[50], depthImageName[50];
+	      sprintf(intIamgeName, "%02d_intensity.png", counter);
+	      sprintf(depthImageName, "%02d_depth.png", counter);
+	      cvSaveImage(intIamgeName, ci->getIntensityImg());
+	      cvSaveImage(depthImageName, ci->getDepthImg());
+	      counter++;
+	    }
 	}
 
       // show images
