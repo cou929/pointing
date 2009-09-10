@@ -1,0 +1,5 @@
+Pointing estimation system
+Kosei Moriyama <cou929@gmail.com>
+
+This system estimates direction of human's pointing gesture using range camera.
+And display a mark onto estimated position using projector.
