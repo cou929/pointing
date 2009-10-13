@@ -112,7 +112,7 @@ int main(void)
 		    if (s.val[0] != 0)
 		      {
 			CvPoint3D32f tmp = ci->getCoordinate(i, j);
-			printf("%f\t%f\t%f\n", tmp.x, tmp.y, tmp.z);
+			printf("%f\t%f\t%f\t%d\t%d\n", tmp.x, tmp.y, tmp.z, j, i);
 		      }
 		  }
 
