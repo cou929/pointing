@@ -9,7 +9,6 @@
 #include "pointing.h"
 #include "pointProjector.h"
 
-using namespace std;
 using namespace point;
 using namespace prj;
 

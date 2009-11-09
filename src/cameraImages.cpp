@@ -7,9 +7,6 @@
 #include "definesSR.h"
 #include "cameraImages.h"
 
-using namespace std;
-
-
 namespace point
 {
 

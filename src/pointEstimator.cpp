@@ -15,7 +15,6 @@
 #include "pointProjector.h"
 #include "coordinateShifter.h"
 
-using namespace std;
 using namespace point;
 using namespace prj;
 using namespace cor;
