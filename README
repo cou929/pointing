@@ -8,7 +8,9 @@ And display a mark onto estimated position using projector.
 
 Usage
 =====
-% 
+% Make
+% ./setSR
+% ./pointEstimator
 
 Files
 =====
