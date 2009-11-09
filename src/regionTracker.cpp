@@ -1,38 +1,27 @@
-// ~moriyama/projects/sr4000/trunk/src/regionTracker.cpp
-//
-// 2009-01-06 add class 'new'ing process into constructor, because of accepting change of these class's constructor
-// 2008-12-22 change centroid calcuration. erode human region before calcuration centroid, because of reducing influence of arm,
-//            add memory release processed into some functions
-// 2008-12-04
-// Kousei MORIYAMA
-//
-// tracking human in the image sequence
-//
-
 #include <cstdio>
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 #include "libusbSR.h"
 #include "definesSR.h"
-#include "pointing.h"
-
-using namespace std;
+#include "regionTracker.h"
+#include "regionDetector.h"
+#include "faceDetector.h"
 
 namespace point
 {
 
 regionTracker::regionTracker(cameraImages *cam)
 {
-  cm = cam;
+  ci = cam;
   initializeFlag = 0;
-  result = cvCreateImage(cm->getImageSize(), IPL_DEPTH_8U, 1);
-  contractedResult = cvCreateImage(cm->getImageSize(), IPL_DEPTH_8U, 1);
+  result = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1);
+  contractedResult = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1);
   element = cvCreateStructuringElementEx (3, 3, 1, 1, CV_SHAPE_CROSS, NULL);
-  intensity = cm->getIntensityImg();
-  depth = cm->getDepthImg();
-  human = new regionDetector(cm->getImageSize());
-  fd = new faceDetector(cm->getImageSize());
+  intensity = ci->getIntensityImg();
+  depth = ci->getDepthImg();
+  human = new regionDetector(ci->getImageSize());
+  fd = new faceDetector(ci->getImageSize());
 }
 
 regionTracker::~regionTracker()
@@ -45,11 +34,6 @@ regionTracker::~regionTracker()
 
 int regionTracker::track()
 {
-  // input: none
-  // return: 0
-  //
-  // Controler of regionTracker.
-
   if(initializeFlag == 0)
     return initialize();
   else
@@ -58,17 +42,8 @@ int regionTracker::track()
 
 int regionTracker::initialize()
 {
-  // input: intensity image, 8bit, 1channel, grayscale
-  //        depth image, 16bit, 1channel, grayscale
-  // output: human region, IplImage, 8bit, 1channlel, binary image
-  //         ('initializeFlag' is set to 1 if initialize is successfully processed)
-  // return: 0
-  //
-  // take normal intensity image and generate silhouette binary image
-  // silhouette is human region in the input image
-
-  CvPoint center;                               // coordinate of center of detected face
-  int radius;                                   // radius of detected face
+  CvPoint center;
+  int radius;
   CvScalar tmp;
 
   // clear result image
@@ -102,15 +77,6 @@ int regionTracker::initialize()
 
 int regionTracker::trackRegion()
 {
-  // input: current frame's depth image
-  // output: set centroid coordinate, depth of centroid and area, CvPoint, int and int
-  // return: 0 if success, -1 if failed
-  //
-  // Track the region.
-  // Get region by starting centroid point.
-  // If depth value of centroid or area value is obviously difference from previous frame's one,
-  // set flag 1 (re-initialize) and return -1.
-
   int depthThreshold;                  // threshold of depth value difference between current and previous frame
   int areaThreshold;                   // threshold of area value difference between current and previous frame
   int prevArea;                        // area of previous frame's region
@@ -186,12 +152,6 @@ int regionTracker::trackRegion()
 
 int regionTracker::calcCentroidAndArea()
 {
-  // input: none
-  // output: set centroid and area, CvPoint and int
-  // return: 0
-  //
-  // Calculate controid and area of region
-
   int areaCount = 0;         // count total pixel of region
   int xSum = 0, ySum = 0;    // sum of x (or y) coordinate of each pixel in the region
   CvScalar current;
@@ -224,12 +184,6 @@ int regionTracker::calcCentroidAndArea()
 
 IplImage* regionTracker::getResult()
 {
-  // input: none
-  // output: none
-  // return: result, IplImage
-  //
-  // Return tracking result, the binary image.
-
   return result;
 }
 

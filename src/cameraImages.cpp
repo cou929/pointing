@@ -1,17 +1,3 @@
-// ~moriyama/projects/sr4000/trunk/src/cameraImages.cpp
-// http://svn.xp-dev.com/svn/cou929_sakanelab/sr4000/trunk/cameraImages.cpp
-//
-// 2008-12-17 add function 'checkCoordinateRange' and set this function to some methods for validation of argument
-// 2008-12-01 add namespace 'point'
-// 2008-11-30
-// Kousei MORIYAMA
-//
-// camera image class
-// contain images capture from sr4000 camera
-// image is OpenCV format
-// present interface to access images, depth value, coordinate of each pixel, confidence of each pixel an so on
-//
-
 #include <iostream>
 #include <cstdio>
 #include <opencv/cv.h>
@@ -19,7 +5,7 @@
 #include <opencv/highgui.h>
 #include "libusbSR.h"
 #include "definesSR.h"
-#include "pointing.h"
+#include "cameraImages.h"
 
 using namespace std;
 
@@ -52,16 +38,6 @@ cameraImages::~cameraImages()
 
 int cameraImages::initialize()
 {
-  //
-  // input: none
-  // return: 0 if succeed
-  // open camera, initialize, allocate memory for IplImages and set pointer
-  //
-  // TODO:
-  // - error handling
-  // - contain window making process, if it can be
-  //
-
   int res;
   unsigned short version[4];
   int pich = sizeof(short);
@@ -113,14 +89,6 @@ int cameraImages::initialize()
 
 int cameraImages::acquire()
 {
-  // input: none
-  // return: 0 if succeed
-  // acquire images from camera to PC, calcurate XYZ coordinate of each pixel and convert amplitude image to IplImage.
-  // call this function at beginning of while loop.
-  //
-  // TODO:
-  // - value check
-
   int i, j;
   CvScalar ampVal;
   unsigned short int *p;

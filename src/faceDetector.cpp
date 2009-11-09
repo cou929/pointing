@@ -1,16 +1,8 @@
-// ~moriyama/projects/sr4000/trunk/src/faceDetector.cpp
-// 
-// 2008-12-01
-// Kosuei MORIYAMA
-//
-// class for face detect
-//
-
 #include <cstdio>
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
-#include "pointing.h"
+#include "faceDetector.h"
 
 namespace point
 {
@@ -44,7 +36,7 @@ int faceDetector::setCascadeName(char *name)
 
 int faceDetector::faceDetect( IplImage* img, CvPoint *center, int *radius )
 {
-  int i, ret;
+  int i = 0, ret = 0;
 
   cvResize( img, smallImg, CV_INTER_LINEAR );
   cvEqualizeHist( smallImg, smallImg );

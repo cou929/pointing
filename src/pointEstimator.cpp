@@ -1,12 +1,3 @@
-// ~moriyama/projects/sr4000/trunk/src/pointEstimator.cpp
-// http://svn.xp-dev.com/svn/cou929_sakanelab/sr4000/trunk/src/pointEstimator.cpp
-//
-// 2009-01-30
-// Kousei MORIYAMA
-//
-// Detect direction of pointing gesture by human, and project mark.
-//
-
 #include <cstdio>
 #include <cstdlib>
 
@@ -17,7 +8,10 @@
 #include "libusbSR.h"
 #include "definesSR.h"
 
-#include "pointing.h"
+#include "cameraImages.h"
+#include "regionTracker.h"
+#include "faceDetector.h"
+#include "funcPointing.h"
 #include "pointProjector.h"
 #include "coordinateShifter.h"
 
@@ -36,7 +30,7 @@ int main(void)
   coordinateShifter *cs = new coordinateShifter();
   double Tx, Ty, Tz, Rx, Ry, Rz, F;
   FILE *fp;
-  char *filename = "param.txt";
+  char *filename = "data/param.txt";
   char line[100];
 
   int width = 1280;

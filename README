@@ -1,5 +1,18 @@
 Pointing estimation system
 Kosei Moriyama <cou929@gmail.com>
 
+Description
+===========
 This system estimates direction of human's pointing gesture using range camera.
 And display a mark onto estimated position using projector.
+
+Usage
+=====
+% 
+
+Files
+=====
+setSR		: Change permittion of video devices. Must be called once first of all.
+src/		: Source files of this project.
+include/	: Include files of this project.
+data/		: Configuration data.

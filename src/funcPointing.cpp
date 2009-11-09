@@ -1,27 +1,11 @@
-// ~Moriyama/projects/sr4000/trunk/src/funcPointing.cpp
-// http://svn.xp-dev.com/svn/cou929_sakanelab/sr4000/trunk/src/funcPointing.cpp
-//
-// 2009-01-16 add functon 'farther' and 'getIntersectionObjAndLine' for calcrurate intersection of pointing line and object.
-// 2008-12-22 add memory release process into 'getArmImage', 'getArmPoints', 'myTinning', 'myOresen' and 'clipImage'.
-// 2008-12-15 add function 'on_mouse_getDepth'
-// 2008-12-13 add enhounced myOresen by watabe
-// 2008-12-02 remove getSilhouette, make class 'regionTracker' (other file)
-// 2008-12-01 add namespace 'point'
-// 2008-11-30
-// Kousei MORIYAMA
-//
-// functions for pointing direction detection
-
-
 #include <cstdio>
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 #include "libusbSR.h"
 #include "definesSR.h"
-#include "pointing.h"
-
-using namespace std;
+#include "funcPointing.h"
+#include "line.h"
 
 namespace point {
 
@@ -565,8 +549,7 @@ int calth(int _n, int _preth,int _b1, int* min_thdel_ad, int* yosouth_ad)
 CvPoint DecideKakupt(CvPoint _pt[] , int _ptNow)
 {
   //角点らしい点を返す関数
-
-  CvPoint Anspt;
+  CvPoint Anspt = cvPoint(0, 0);
 
   //１つの点ならそのまま返す
   if ( (_ptNow - 1) <= 0 ) return _pt[0];
@@ -796,8 +779,8 @@ CvPoint3D32f getIntersectionObjAndLine(line3DCv *srcLine, cameraImages *ci)
   CvPoint3D32f tmp, ret = {-1, -1, -1};
   double v;
   int i, j, sign = 1, threshold = 5;
-  vector <CvPoint3D32f> sorted;
-  vector <CvPoint3D32f>::iterator it;
+  std::vector <CvPoint3D32f> sorted;
+  std::vector <CvPoint3D32f>::iterator it;
   CvSize size = ci->getImageSize();
 
   for (j=0; j<size.height; j++)

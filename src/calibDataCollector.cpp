@@ -1,11 +1,4 @@
-// ~moriyama/projects/sr4000/trunk/src/calibDataCollector.cpp
-// http://svn.xp-dev.com/svn/cou929_sakanelab/sr4000/trunk/src/calibDataCollector.cpp
-//
-// 2009-02-07
-// Kousei MORIYAMA
-//
 // Collect data for calibration.
-//
 
 #include <cstdio>
 #include <opencv/cv.h>
@@ -93,10 +86,6 @@ int main(void)
 
   return 0;
 }
-
-
-
-
 
 
 

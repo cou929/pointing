@@ -1,21 +1,8 @@
-// ~moriyama/projects/sr4000/trunk/regionDetector.cpp
-// http://svn.xp-dev.com/svn/cou929_repo/master/sr4000/trunk/regionDetector.cpp
-//
-// 2009-01-06 remove memory allocation which did in function 'getRegion' to constructor, for memory leak.
-// 2008-12-04
-// Kousei MORIYAMA
-//
-// region detector
-// Detect ragion from depth, intensity, binary or etc images.
-//
-
 #include <cstdio>
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
-#include "pointing.h"
-
-using namespace std;
+#include "regionDetector.h"
 
 namespace point
 {
@@ -36,15 +23,6 @@ regionDetector::~regionDetector()
 
 int regionDetector::getRegion(IplImage *src, int x, int y, IplImage *dst)
 {
-  // input: image (depth, intensity and so on), IplImage, 1 channel, (recommend 8 bit depth)
-  //        a coordinate which is contained in region you want to get, int
-  // return: region image, IplImage, binary image
-  //         or 0 if coordinate is invalid (out of iamge size or there are no region)
-  //
-  // Take (depth, intensity, binary and so on) image, classify the image by the region.
-  // The region is pixels which has almost same value between that pixel and around pixels.
-  // And return the region which contain pixel (x, y).
-
   int bitDepth;
   int iteration;
 
@@ -74,21 +52,6 @@ int regionDetector::getRegion(IplImage *src, int x, int y, IplImage *dst)
 
 int regionDetector::traverse(int x, int y, int direction)
 {
-  // input: coordinate, int
-  //        direction, const int, LEFT, RIGHT, TOP, BOTTOM or NONE
-  // output: make binary image in 'result', white pixels represents the same region
-  // return: 0
-  //
-  // Recursive function.
-  // Traverse pixels and then label.
-  // When search process reaches the pixel, calcurate gradient value 
-  // between current pixel and around of current pixel, 
-  // total these gradient values, and then if total of gradient is 
-  // smaller than threshold (default 20 or 2000), current pixel is setted as inner region
-  // and next searches around pixels,
-  // if larger than threshold, current pixel is setted as inner region
-  // but not traverse around pixels.
-
   int sumGradient = 0;
   int i, j;
   CvScalar tmp;
@@ -126,13 +89,6 @@ int regionDetector::traverse(int x, int y, int direction)
 
 int regionDetector::calcGradient(CvPoint arg1, CvPoint arg2)
 {
-  // input: two coordinates, CvPoint
-  // output: none
-  // return: gradient value
-  //
-  // Calcurate gradient value, the absolute value of 
-  // difference between 'arg1' and 'arg2'
-
   CvScalar s1, s2;
   double tmp;
 
@@ -151,12 +107,6 @@ int regionDetector::calcGradient(CvPoint arg1, CvPoint arg2)
 
 int regionDetector::setThreshold(int th)
 {
-  // input: threshold value, int
-  // output: none
-  // return: 0
-  //
-  // Set threshold.
-
   threshold = th;
 
   return 0;
