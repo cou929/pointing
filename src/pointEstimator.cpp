@@ -73,57 +73,102 @@ int main(void)
   cvNamedWindow("Intensity", CV_WINDOW_AUTOSIZE);
   cvNamedWindow("Result", CV_WINDOW_AUTOSIZE);
   cvNamedWindow("centroid", CV_WINDOW_AUTOSIZE);
-  cvNamedWindow("thinning", CV_WINDOW_AUTOSIZE);
+  cvNamedWindow("arm", CV_WINDOW_AUTOSIZE);
   cvMoveWindow ("Depth",  windowOrigin.x, windowOrigin.y);
   cvMoveWindow ("Intensity",  windowOrigin.x, windowOrigin.y + 200);
   cvMoveWindow ("Result",  windowOrigin.x + 200, windowOrigin.y);
   cvMoveWindow ("centroid",  windowOrigin.x + 200, windowOrigin.y + 200);
-  cvMoveWindow ("thinning",  windowOrigin.x + 200, windowOrigin.y + 400);
+  cvMoveWindow ("arm",  windowOrigin.x + 200, windowOrigin.y + 400);
 
   // set callback funtions
   cvSetMouseCallback ("Depth", on_mouse_getDepth, ci);
   cvSetMouseCallback ("Intensity", on_mouse_pointing, ci->getDepthImg());
+
+  faceDetector * fd = new faceDetector(ci->getImageSize());
+  IplImage *arm = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1); // FIX LATER
+  CvPoint center;
+  int radius;
 
   while(1)
     {
       // acquire current frame
       ci->acquire();
 
+      /////////////////
+      CvPoint3D32f current, face;
+      long long maxDistance = 0;
+      CvPoint farPoint;
+
+      fd->faceDetect(ci->getIntensityImg(), &center, &radius);
+      getArmImage(img, arm);
+
+      face = ci->getCoordinate(center);
+
+      human->track();
+      cvShowImage("arm", human->getResult());
+
+      for (int i=0; i<arm->height; i++)
+	for (int j=0; j<arm->width; j++)
+	  {
+	    CvScalar regionChecker = cvGet2D(human->getResult(), i, j);
+	    if (regionChecker.val[0] == 255)
+	      {
+		current = ci->getCoordinate(i, j);
+
+		long long tmp = (current.x - face.x)*(current.x - face.x) + (current.y - face.y)*(current.y - face.y) + (current.z - face.z)*(current.z - face.z);
+		if (maxDistance < tmp)
+		  {
+		    maxDistance = tmp;
+		    farPoint = cvPoint(i, j);
+		  }
+	      }
+	  }
+
+      cvCircle(ci->getIntensityImg(), center, 30, CV_RGB(127, 127, 127));
+      cvCircle(ci->getIntensityImg(), farPoint, 30, CV_RGB(255, 255, 255));
+      cvCircle(ci->getIntensityImg(), farPoint, 5, CV_RGB(255, 255, 255));
+      /////////////////////////////
+
+      /*
       // track human region
       res = human->track();
 
       if(res == 0)
-	{
-	  // get human region
-	  img = human->getResult();
+      {
+      // get human region
+      img = human->getResult();
 
-	  // get arm points
-	  getArmPoints(img, &fingertip2D, &elbow2D);
+      ////
+      ////
 
-	  // get 3D coordinate of arm points
-	  fingertip3D = ci->getCoordinate(fingertip2D);
-	  elbow3D = ci->getCoordinate(elbow2D);
-	  if(fingertip3D.x == -1 || elbow3D.x == -1)
-	    continue;
+      // get arm points
+      getArmPoints(img, &fingertip2D, &elbow2D);
 
-	  // calculate pointing direction
-	  pointingLine->setLine(elbow3D, fingertip3D);
-	  if(!pointingLine->isValid())
-	    continue;
+      // get 3D coordinate of arm points
+      fingertip3D = ci->getCoordinate(fingertip2D);
+      elbow3D = ci->getCoordinate(elbow2D);
+      if(fingertip3D.x == -1 || elbow3D.x == -1)
+      continue;
 
-	  // calculate intersection of pointing line and subject object
-	  subject3D = getMarkCoord(pointingLine, ci);
-	  if (subject3D.x == -1)
-	    continue;
+      // calculate pointing direction
+      pointingLine->setLine(elbow3D, fingertip3D);
+      if(!pointingLine->isValid())
+      continue;
 
-	  // calcurate coordinate where to projector points
-	  subject2D = cs->world2img((-1)*subject3D.z, (-1)*subject3D.x, subject3D.y);
+      // calculate intersection of pointing line and subject object
+      subject3D = getMarkCoord(pointingLine, ci);
+      if (subject3D.x == -1)
+      continue;
 
-	  // project mark
-	  prj->showPoint(subject2D);
+      // calcurate coordinate where to projector points
+      subject2D = cs->world2img((-1)*subject3D.z, (-1)*subject3D.x, subject3D.y);
 
-	  cvShowImage("Result", img);
-	}
+      // project mark
+      prj->showPoint(subject2D);
+
+      cvShowImage("Result", img);
+      }
+      */
 
       // show images
       cvShowImage("Depth", ci->getDepthImg());
@@ -139,7 +184,7 @@ int main(void)
   cvDestroyWindow("Depth");
   cvDestroyWindow("Intensity");
   cvDestroyWindow("Result");
-  cvDestroyWindow("thinning");
+  cvDestroyWindow("arm");
   cvDestroyWindow("centroid");
   delete ci;
   delete pointingLine;
