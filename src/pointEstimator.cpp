@@ -1,12 +1,11 @@
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
+#include <utility>
 
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
-
-#include "libusbSR.h"
-#include "definesSR.h"
 
 #include "cameraImages.h"
 #include "regionTracker.h"
@@ -84,10 +83,18 @@ int main(void)
   cvSetMouseCallback ("Depth", on_mouse_getDepth, ci);
   cvSetMouseCallback ("Intensity", on_mouse_pointing, ci->getDepthImg());
 
+  /////////////////////
   faceDetector * fd = new faceDetector(ci->getImageSize());
   IplImage *arm = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1); // FIX LATER
+  IplImage *color = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 3);
+  IplImage *invalids = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 3);
   CvPoint center;
   int radius;
+  int numFar = 1000;
+  cvNamedWindow("colorwin", 0);
+  cvNamedWindow("invalid points", 0);
+  cvNamedWindow("confidenceMap", 0);
+  /////////////////////
 
   while(1)
     {
@@ -98,35 +105,65 @@ int main(void)
       CvPoint3D32f current, face;
       long long maxDistance = 0;
       CvPoint farPoint;
+      std::vector <std::pair <long long, std::pair <int, int> > > distances;
+
+      cvCvtColor(ci->getIntensityImg(), color, CV_GRAY2BGR);
+      cvCopy(color, invalids);
 
       fd->faceDetect(ci->getIntensityImg(), &center, &radius);
       getArmImage(img, arm);
 
       face = ci->getCoordinate(center);
 
-      human->track();
-      cvShowImage("arm", human->getResult());
-
-      for (int i=0; i<arm->height; i++)
-	for (int j=0; j<arm->width; j++)
-	  {
-	    CvScalar regionChecker = cvGet2D(human->getResult(), i, j);
-	    if (regionChecker.val[0] == 255)
+      res = human->track();
+      if (res == 0)
+	{
+	  for (int i=0; i<arm->height; i++)
+	    for (int j=0; j<arm->width; j++)
 	      {
-		current = ci->getCoordinate(i, j);
+		CvScalar regionChecker = cvGet2D(human->getResult(), i, j);
+		current = ci->getCoordinate(j, i);
+
+		if (current.x == 0 || current.y == 0 || current.z == 0)
+		  {
+		    cvCircle(invalids, cvPoint(j, i), 1, CV_RGB(255, 127, 127));
+		    continue;
+		  }
+
+		if (regionChecker.val[0] != 255)
+		  continue;
 
 		long long tmp = (current.x - face.x)*(current.x - face.x) + (current.y - face.y)*(current.y - face.y) + (current.z - face.z)*(current.z - face.z);
-		if (maxDistance < tmp)
-		  {
-		    maxDistance = tmp;
-		    farPoint = cvPoint(i, j);
-		  }
+		distances.push_back(std::make_pair(tmp, std::make_pair(i, j)));
 	      }
-	  }
 
-      cvCircle(ci->getIntensityImg(), center, 30, CV_RGB(127, 127, 127));
-      cvCircle(ci->getIntensityImg(), farPoint, 30, CV_RGB(255, 255, 255));
-      cvCircle(ci->getIntensityImg(), farPoint, 5, CV_RGB(255, 255, 255));
+	  std::sort(distances.rbegin(), distances.rend());
+
+	  for (int i=0; i<numFar; i++)
+	    {
+	      CvPoint currentPoint = cvPoint(distances[i].second.second, distances[i].second.first);
+	      CvPoint3D32f tmpCoord = ci->getCoordinate(currentPoint);
+
+#ifdef DEBUG_PRINT_COORD
+	      std::cout << i << "th far point, " << tmpCoord.x << ", " << tmpCoord.y << ", " << tmpCoord.z << std::endl;
+#endif
+
+	      int redDepth = 255 - ((double)255/(double)numFar) * (double)i;
+	      cvCircle(color, currentPoint, 1, CV_RGB(0, redDepth, 0));
+	    }
+
+#ifdef DEBUG_PRINT_COORD
+	  CvPoint3D32f tmpCoord = ci->getCoordinate(center);
+	  std::cout << "face point, " << tmpCoord.x << ", " << tmpCoord.y << ", " << tmpCoord.z << std::endl;
+#endif
+
+	  cvCircle(color, center, radius, CV_RGB(127, 127, 255));
+
+	  cvShowImage("colorwin", color);
+	  cvShowImage("invalid points", invalids);
+	  cvShowImage("confidenceMap", ci->getConfidenceMap());
+	  cvShowImage("arm", human->getResult());
+	}
       /////////////////////////////
 
       /*
