@@ -142,32 +142,23 @@ int cameraImages::getIntensityVal(int x, int y)
   return (int)tmp.val[0];
 }
 
-CvPoint3D32f cameraImages::getCoordinate(int x, int y)
+CvPoint3D32f cameraImages::getCoordinate(int column, int row)
 {
   CvPoint3D32f ret = {-1, -1, -1};
 
-  if(checkCoordinateRange(x, y) == -1)
+  if(checkCoordinateRange(column, row) == -1)
     return ret;
 
-  ret.x = X[x + y * width];
-  ret.y = Y[x + y * width];
-  ret.z = Z[x + y * width];
+  ret.x = X[column + row * width];
+  ret.y = Y[column + row * width];
+  ret.z = Z[column + row * width];
 
   return ret;
 }
 
 CvPoint3D32f cameraImages::getCoordinate(CvPoint point)
 {
-  CvPoint3D32f ret = {-1, -1, -1};
-
-  if(checkCoordinateRange(point.x, point.y) == -1)
-    return ret;
-
-  ret.x = X[point.x + point.y * width];
-  ret.y = Y[point.x + point.y * width];
-  ret.z = Z[point.x + point.y * width];
-
-  return ret;
+  return getCoordinate(point.x, point.y);
 }
 
 int cameraImages::getConfidenceVal(int x, int y)

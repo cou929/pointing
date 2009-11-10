@@ -34,9 +34,9 @@ class cameraImages
   int height;
   int pich;
 
-  int checkCoordinateRange(int x, int y)
+  int checkCoordinateRange(int column, int row)
   {
-    if(x >= 0 && y >= 0 && x < width && y < height)
+    if(column >= 0 && row >= 0 && column < width && row < height)
       return 0;
     else 
       return -1;
