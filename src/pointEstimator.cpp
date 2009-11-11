@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cfloat>
 #include <vector>
 #include <utility>
 
@@ -17,6 +18,67 @@
 using namespace point;
 using namespace prj;
 using namespace cor;
+
+class distanceField
+{
+private:
+  cameraImages * ci;
+  IplImage * field;
+  CvPoint origin;
+  int depth;
+  double calcDistance(CvPoint3D32f a, CvPoint3D32f b) { return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-a.z)); }
+public:
+  distanceField(cameraImages * c)
+  {
+    ci = c;
+    field = cvCreateImage(ci->getImageSize(), IPL_DEPTH_16U, 1);
+    cvSetZero(field);
+    origin = cvPoint(0, 0);
+    depth = 16;
+  }
+
+  ~distanceField() { cvReleaseImage(&field); }
+
+  IplImage * calculate(CvPoint origin = cvPoint(0, 0))
+  {
+    int row, col;
+    CvSize size = ci->getImageSize();
+    CvPoint3D32f current, origin3d;
+    double nearest = DBL_MAX, farthest = 0;
+
+    cvSetZero(field);
+
+    origin3d = ci->getCoordinate(origin);
+    if (origin3d.x == -1 && origin3d.y == -1 && origin3d.z == -1)
+      return field;
+  
+    for (row=0; row<size.height; row++)
+      for (col=0; col<size.width; col++)
+	{
+	  current = ci->getCoordinate(col, row);
+	  if (current.x != -1 && current.y != -1 && current.z != -1)
+	    {
+	      double d = calcDistance(current, origin3d);
+	      nearest = std::min(nearest, d);
+	      farthest = std::max(farthest, d);
+	      cvSet2D(field, row, col, cvScalarAll(d));
+	    }
+	}
+
+    double maxNum = pow((double)2, (double)depth);
+    double ratio = maxNum / (farthest - nearest);
+
+    for (row=0; row<size.height; row++)
+      for (col=0; col<size.width; col++)
+	{
+	  CvScalar cur = cvGet2D(field, row, col);
+	  cur = cvScalarAll((cur.val[0] - nearest) * ratio);
+	  cvSet2D(field, row, col, cur);
+	}
+
+    return field;
+  }
+};
 
 int main(void)
 {
@@ -87,11 +149,14 @@ int main(void)
   faceDetector * fd = new faceDetector(ci->getImageSize());
   IplImage *arm = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1); // FIX LATER
   IplImage *color = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 3);
+  IplImage * distanceImg;
   CvPoint center;
   int radius;
   int numFar = 1000;
-  cvNamedWindow("colorwin", 0);
+  distanceField * distField = new distanceField(ci);
   cvNamedWindow("confidenceMap", 0);
+  cvNamedWindow("colorwin", 0);
+  cvNamedWindow("distanceField", 0);
   /////////////////////
 
   while(1)
@@ -143,8 +208,8 @@ int main(void)
 	      std::cout << i << "th far point, " << tmpCoord.x << ", " << tmpCoord.y << ", " << tmpCoord.z << std::endl;
 #endif
 
-	      int redDepth = 255 - ((double)255/(double)numFar) * (double)i;
-	      cvCircle(color, currentPoint, 1, CV_RGB(0, redDepth, 0));
+	      int greenDepth = 255 - ((double)255/(double)numFar) * (double)i;
+	      cvCircle(color, currentPoint, 1, CV_RGB(0, greenDepth, 0));
 	    }
 
 #ifdef DEBUG_PRINT_COORD
@@ -158,6 +223,8 @@ int main(void)
 	  cvShowImage("arm", human->getResult());
 	}
 
+      distanceImg = distField->calculate(cvPoint(ci->getIntensityImg()->height/2, ci->getIntensityImg()->width/2));
+      cvShowImage("distanceField", distanceImg);
       cvShowImage("confidenceMap", ci->getConfidenceMap());
       /////////////////////////////
 
