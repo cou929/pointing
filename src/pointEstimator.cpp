@@ -87,12 +87,10 @@ int main(void)
   faceDetector * fd = new faceDetector(ci->getImageSize());
   IplImage *arm = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1); // FIX LATER
   IplImage *color = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 3);
-  IplImage *invalids = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 3);
   CvPoint center;
   int radius;
   int numFar = 1000;
   cvNamedWindow("colorwin", 0);
-  cvNamedWindow("invalid points", 0);
   cvNamedWindow("confidenceMap", 0);
   /////////////////////
 
@@ -108,7 +106,6 @@ int main(void)
       std::vector <std::pair <long long, std::pair <int, int> > > distances;
 
       cvCvtColor(ci->getIntensityImg(), color, CV_GRAY2BGR);
-      cvCopy(color, invalids);
 
       fd->faceDetect(ci->getIntensityImg(), &center, &radius);
       getArmImage(img, arm);
@@ -116,21 +113,18 @@ int main(void)
       face = ci->getCoordinate(center);
 
       res = human->track();
+
       if (res == 0)
 	{
+
 	  for (int i=0; i<arm->height; i++)
 	    for (int j=0; j<arm->width; j++)
 	      {
 		CvScalar regionChecker = cvGet2D(human->getResult(), i, j);
 		current = ci->getCoordinate(j, i);
 
-		if (current.x == 0 || current.y == 0 || current.z == 0)
-		  {
-		    cvCircle(invalids, cvPoint(j, i), 1, CV_RGB(255, 127, 127));
-		    continue;
-		  }
-
-		if (regionChecker.val[0] != 255)
+		if (current.x == -1 && current.y == -1 && current.z == -1 ||
+		    regionChecker.val[0] != 255)
 		  continue;
 
 		long long tmp = (current.x - face.x)*(current.x - face.x) + (current.y - face.y)*(current.y - face.y) + (current.z - face.z)*(current.z - face.z);
@@ -139,7 +133,8 @@ int main(void)
 
 	  std::sort(distances.rbegin(), distances.rend());
 
-	  for (int i=0; i<numFar; i++)
+	  int loopcount = std::min(numFar, (int)distances.size());
+	  for (int i=0; i<loopcount; i++)
 	    {
 	      CvPoint currentPoint = cvPoint(distances[i].second.second, distances[i].second.first);
 	      CvPoint3D32f tmpCoord = ci->getCoordinate(currentPoint);
@@ -160,10 +155,10 @@ int main(void)
 	  cvCircle(color, center, radius, CV_RGB(127, 127, 255));
 
 	  cvShowImage("colorwin", color);
-	  cvShowImage("invalid points", invalids);
-	  cvShowImage("confidenceMap", ci->getConfidenceMap());
 	  cvShowImage("arm", human->getResult());
 	}
+
+      cvShowImage("confidenceMap", ci->getConfidenceMap());
       /////////////////////////////
 
       /*
