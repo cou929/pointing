@@ -8,8 +8,6 @@
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
-#include "libusbSR.h"
-#include "definesSR.h"
 #include "cameraImages.h"
 #include "regionDetector.h"
 #include "faceDetector.h"

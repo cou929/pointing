@@ -2,8 +2,6 @@
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
-#include "libusbSR.h"
-#include "definesSR.h"
 #include "regionTracker.h"
 #include "regionDetector.h"
 #include "faceDetector.h"
