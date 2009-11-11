@@ -21,6 +21,7 @@ cameraImages::cameraImages()
   Y = 0;
   Z = 0;
   ampImgThreshold = 3000;
+  confMapThreshold = 50000;
   width = 0;
   height = 0;
   pich = sizeof(short);
@@ -142,23 +143,29 @@ int cameraImages::getIntensityVal(int x, int y)
   return (int)tmp.val[0];
 }
 
-CvPoint3D32f cameraImages::getCoordinate(int column, int row)
+CvPoint3D32f cameraImages::getCoordinate(int column, int row, bool useConfFilter)
 {
   CvPoint3D32f ret = {-1, -1, -1};
+  int x, y, z;
+  CvScalar confident;
 
-  if(checkCoordinateRange(column, row) == -1)
-    return ret;
-
-  ret.x = X[column + row * width];
-  ret.y = Y[column + row * width];
-  ret.z = Z[column + row * width];
+  if (checkCoordinateRange(column, row) != -1)
+    {
+      confident = cvGet2D(cvConf, row, column);
+      if(useConfFilter && confident.val[0] >= confMapThreshold)
+	{
+	  ret.x = X[column + row * width];
+	  ret.y = Y[column + row * width];
+	  ret.z = Z[column + row * width];
+	}
+    }
 
   return ret;
 }
 
-CvPoint3D32f cameraImages::getCoordinate(CvPoint point)
+CvPoint3D32f cameraImages::getCoordinate(CvPoint point, bool useConfFilter)
 {
-  return getCoordinate(point.x, point.y);
+  return getCoordinate(point.x, point.y, useConfFilter);
 }
 
 int cameraImages::getConfidenceVal(int x, int y)
