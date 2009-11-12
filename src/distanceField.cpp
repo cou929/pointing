@@ -1,5 +1,8 @@
 #include "distanceField.h"
 
+namespace point
+{
+
 distanceField::distanceField(cameraImages * c)
 {
   ci = c;
@@ -57,4 +60,6 @@ IplImage * distanceField::calculate(CvPoint origin)
       }
 
   return field;
+}
+
 }

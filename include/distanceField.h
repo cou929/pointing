@@ -5,7 +5,8 @@
 #include <opencv/cxcore.h>
 #include "cameraImages.h"
 
-using namespace point;
+namespace point
+{
 
 class distanceField
 {
@@ -20,14 +21,12 @@ class distanceField
 
  public:
   distanceField(cameraImages * c);
-
   ~distanceField() { cvReleaseImage(&field); }
-
   IplImage * calculate(CvPoint origin = cvPoint(0, 0));
-
   IplImage * getVisibleImage() { return vis; }
-
   int setMask(IplImage * m) { cvCopy(m, mask); return 0; }
 };
+
+}
 
 #endif
