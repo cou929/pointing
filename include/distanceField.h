@@ -1,7 +1,7 @@
 #ifndef __DISTANCE_FIELD_H_
 #define __DISTANCE_FIELD_H_
 
-#include <map>
+#include <vector>
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include "cameraImages.h"
@@ -18,7 +18,7 @@ class distanceField
   IplImage * vis;
   CvPoint origin;
   int depth;
-  std::map <double, CvPoint> distances;
+  std::vector <std::vector <int> > distances;
   double calcDistance(CvPoint3D32f a, CvPoint3D32f b) { return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z)); }
   int adjustDistImgRange(double nearest, double farthest);
   int isValidCoord(CvPoint3D32f p) {
@@ -31,10 +31,16 @@ class distanceField
  public:
   distanceField(cameraImages * c);
   ~distanceField() { cvReleaseImage(&field); }
+
   IplImage * calculate(CvPoint origin = cvPoint(0, 0));
+
   IplImage * getVisibleImage() { return vis; }
+
   int setMask(IplImage * m) { cvCopy(m, mask); return 0; }
-  std::map <double, CvPoint> getDistances() { return distances; }
+
+  std::vector <std::vector <int> > & getDistances() { std::sort(distances.rbegin(), distances.rend()); return distances; }
+  // Returns 2 dimension array. Each row has exactry 3 elements, 0th element is distance, 1st element is column number and
+  // 2nd element is row number.
 };
 
 }

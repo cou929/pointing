@@ -24,6 +24,7 @@ IplImage * distanceField::calculate(CvPoint origin)
   double nearest = DBL_MAX, farthest = 0;
 
   cvSetZero(field);
+  distances.clear();
 
   origin3d = ci->getCoordinate(origin);
 
@@ -44,7 +45,11 @@ IplImage * distanceField::calculate(CvPoint origin)
 	    nearest = std::min(nearest, d);
 	    farthest = std::max(farthest, d);
 
-	    distances[d] = cvPoint(col, row);
+	    std::vector <int> tmp(3, 0);
+	    tmp[0] = (int)d;
+	    tmp[1] = col;
+	    tmp[2] = row;
+	    distances.push_back(tmp);
 	  }
       }
 

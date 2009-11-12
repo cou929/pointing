@@ -91,9 +91,11 @@ int main(void)
   IplImage *color = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 3);
   IplImage * distanceImg;
   CvPoint center;
+  CvPoint3D32f face;
   int radius;
   int numFar = 1000;
   distanceField * distField = new distanceField(ci);
+  std::vector <std::vector <int> > distances;
   cvNamedWindow("confidenceMap", 0);
   cvNamedWindow("colorwin", 0);
   cvNamedWindow("distanceField", 0);
@@ -105,52 +107,29 @@ int main(void)
       ci->acquire();
 
       /////////////////
-      CvPoint3D32f current, face;
-      long long maxDistance = 0;
-      CvPoint farPoint;
-      std::vector <std::pair <long long, std::pair <int, int> > > distances;
-
       cvCvtColor(ci->getIntensityImg(), color, CV_GRAY2BGR);
       fd->faceDetect(ci->getIntensityImg(), &center, &radius);
       face = ci->getCoordinate(center);
       res = human->track();
-      getArmImage(human->getResult(), arm);
 
       if (res == 0)
 	{
-	  for (int i=0; i<arm->height; i++)
-	    for (int j=0; j<arm->width; j++)
-	      {
-		CvScalar regionChecker = cvGet2D(human->getResult(), i, j);
-		current = ci->getCoordinate(j, i);
-
-		if (current.x == -1 && current.y == -1 && current.z == -1 ||
-		    regionChecker.val[0] != 255)
-		  continue;
-
-		long long tmp = (current.x - face.x)*(current.x - face.x) + (current.y - face.y)*(current.y - face.y) + (current.z - face.z)*(current.z - face.z);
-		distances.push_back(std::make_pair(tmp, std::make_pair(i, j)));
-	      }
-
-	  std::sort(distances.rbegin(), distances.rend());
-
-	  int loopcount = std::min(numFar, (int)distances.size());
-	  for (int i=0; i<loopcount; i++)
-	    {
-	      CvPoint currentPoint = cvPoint(distances[i].second.second, distances[i].second.first);
-	      CvPoint3D32f tmpCoord = ci->getCoordinate(currentPoint);
-
-	      int greenDepth = 255 - ((double)255/(double)numFar) * (double)i;
-	      cvCircle(color, currentPoint, 1, CV_RGB(0, greenDepth, 0));
-	    }
-
-	  // draw circle on face
-	  cvCircle(color, center, radius, CV_RGB(127, 127, 255));
-
 	  // calculate distance field
 	  distField->setMask(human->getResult());
 	  distField->calculate(center);
 	  distanceImg = distField->getVisibleImage();
+
+	  // draw green circles on top numFar-th pixels which are far from face
+	  distances = distField->getDistances();
+	  int loopcount = std::min(numFar, (int)distances.size());
+	  for (int i=0; i<loopcount; i++)
+	    {
+	      int greenDepth = 255 - ((double)255/(double)numFar) * (double)i;
+	      cvCircle(color, cvPoint(distances[i][1], distances[i][2]), 1, CV_RGB(0, greenDepth, 0));
+	    }
+
+	  // draw circle on face
+	  cvCircle(color, center, radius, CV_RGB(127, 127, 255));
 
 	  cvShowImage("distanceField", distanceImg);
 	  cvShowImage("colorwin", color);
@@ -168,9 +147,6 @@ int main(void)
       {
       // get human region
       img = human->getResult();
-
-      ////
-      ////
 
       // get arm points
       getArmPoints(img, &fingertip2D, &elbow2D);
