@@ -26,7 +26,8 @@ IplImage * distanceField::calculate(CvPoint origin)
   cvSetZero(field);
 
   origin3d = ci->getCoordinate(origin);
-  if (origin3d.x == -1 && origin3d.y == -1 && origin3d.z == -1)
+
+  if (!isValidCoord(origin3d))
     return field;
   
   for (row=0; row<size.height; row++)
@@ -35,19 +36,30 @@ IplImage * distanceField::calculate(CvPoint origin)
 	current = ci->getCoordinate(col, row);
 	CvScalar maskPix = cvGet2D(mask, row, col);
 
-	if (current.x != -1 && current.y != -1 && current.z != -1 &&   // valid coordinate
-	    maskPix.val[0] != 0)                                       // checking mask
+	if (isValidCoord(current) &&  maskPix.val[0] != 0)
 	  {
 	    double d = calcDistance(current, origin3d);
 	    cvSet2D(field, row, col, cvScalarAll(d));
 
 	    nearest = std::min(nearest, d);
 	    farthest = std::max(farthest, d);
+
+	    distances[d] = cvPoint(col, row);
 	  }
       }
 
+  adjustDistImgRange(nearest, farthest);
+
+  return field;
+}
+
+int distanceField::adjustDistImgRange(double nearest, double farthest)
+{
   // Convert range of distance value for adjusting image depth
   // to view the result visibly
+
+  int row, col;
+  CvSize size = ci->getImageSize();
   double maxNum = pow((double)2, (double)depth);
   double ratio = maxNum / (farthest - nearest);
 
@@ -59,7 +71,7 @@ IplImage * distanceField::calculate(CvPoint origin)
 	cvSet2D(vis, row, col, cur);
       }
 
-  return field;
+  return 0;
 }
 
 }
