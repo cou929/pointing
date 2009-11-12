@@ -1,10 +1,3 @@
-#include <iostream>
-#include <cstdio>
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
-#include "libusbSR.h"
-#include "definesSR.h"
 #include "cameraImages.h"
 
 namespace point
@@ -146,7 +139,6 @@ int cameraImages::getIntensityVal(int x, int y)
 CvPoint3D32f cameraImages::getCoordinate(int column, int row, bool useConfFilter)
 {
   CvPoint3D32f ret = {-1, -1, -1};
-  int x, y, z;
   CvScalar confident;
 
   if (checkCoordinateRange(column, row) != -1)
