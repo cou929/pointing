@@ -41,6 +41,7 @@ class distanceField
   std::vector <std::vector <int> > & getDistances() { std::sort(distances.rbegin(), distances.rend()); return distances; }
   // Returns 2 dimension array. Each row has exactry 3 elements, 0th element is distance, 1st element is column number and
   // 2nd element is row number.
+  // The vector is sorted as descending order.
 };
 
 }
