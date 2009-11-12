@@ -28,11 +28,14 @@ private:
   int depth;
   double calcDistance(CvPoint3D32f a, CvPoint3D32f b) { return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-a.z)); }
 public:
+  IplImage * mask;
+
   distanceField(cameraImages * c)
   {
     ci = c;
     field = cvCreateImage(ci->getImageSize(), IPL_DEPTH_16U, 1);
-    cvSetZero(field);
+    mask = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1);
+    cvSet(field, cvScalarAll(255));
     origin = cvPoint(0, 0);
     depth = 16;
   }
@@ -56,15 +59,21 @@ public:
       for (col=0; col<size.width; col++)
 	{
 	  current = ci->getCoordinate(col, row);
-	  if (current.x != -1 && current.y != -1 && current.z != -1)
+	  CvScalar maskPix = cvGet2D(mask, row, col);
+
+	  if (current.x != -1 && current.y != -1 && current.z != -1 &&   // valid coordinate
+	      maskPix.val[0] != 0)                                       // checking mask
 	    {
 	      double d = calcDistance(current, origin3d);
+	      cvSet2D(field, row, col, cvScalarAll(d));
+
 	      nearest = std::min(nearest, d);
 	      farthest = std::max(farthest, d);
-	      cvSet2D(field, row, col, cvScalarAll(d));
 	    }
 	}
 
+    // Convert range of distance value for adjusting image depth
+    // to view the result visibly
     double maxNum = pow((double)2, (double)depth);
     double ratio = maxNum / (farthest - nearest);
 
@@ -78,6 +87,8 @@ public:
 
     return field;
   }
+
+  int setMask(IplImage * m) { cvCopy(m, mask); return 0; }
 };
 
 int main(void)
@@ -134,12 +145,12 @@ int main(void)
   cvNamedWindow("Intensity", CV_WINDOW_AUTOSIZE);
   cvNamedWindow("Result", CV_WINDOW_AUTOSIZE);
   cvNamedWindow("centroid", CV_WINDOW_AUTOSIZE);
-  cvNamedWindow("arm", CV_WINDOW_AUTOSIZE);
+  cvNamedWindow("human", CV_WINDOW_AUTOSIZE);
   cvMoveWindow ("Depth",  windowOrigin.x, windowOrigin.y);
   cvMoveWindow ("Intensity",  windowOrigin.x, windowOrigin.y + 200);
   cvMoveWindow ("Result",  windowOrigin.x + 200, windowOrigin.y);
   cvMoveWindow ("centroid",  windowOrigin.x + 200, windowOrigin.y + 200);
-  cvMoveWindow ("arm",  windowOrigin.x + 200, windowOrigin.y + 400);
+  cvMoveWindow ("human",  windowOrigin.x + 200, windowOrigin.y + 400);
 
   // set callback funtions
   cvSetMouseCallback ("Depth", on_mouse_getDepth, ci);
@@ -217,14 +228,18 @@ int main(void)
 	  std::cout << "face point, " << tmpCoord.x << ", " << tmpCoord.y << ", " << tmpCoord.z << std::endl;
 #endif
 
+	  // draw circle on face
 	  cvCircle(color, center, radius, CV_RGB(127, 127, 255));
 
+	  // calculate distance field
+	  distField->setMask(human->getResult());
+	  distanceImg = distField->calculate(cvPoint(ci->getIntensityImg()->height/2, ci->getIntensityImg()->width/2));
+
+	  cvShowImage("distanceField", distanceImg);
 	  cvShowImage("colorwin", color);
-	  cvShowImage("arm", human->getResult());
+	  cvShowImage("human", human->getResult());
 	}
 
-      distanceImg = distField->calculate(cvPoint(ci->getIntensityImg()->height/2, ci->getIntensityImg()->width/2));
-      cvShowImage("distanceField", distanceImg);
       cvShowImage("confidenceMap", ci->getConfidenceMap());
       /////////////////////////////
 
@@ -259,7 +274,7 @@ int main(void)
       if (subject3D.x == -1)
       continue;
 
-      // calcurate coordinate where to projector points
+      // calculate coordinate where to projector points
       subject2D = cs->world2img((-1)*subject3D.z, (-1)*subject3D.x, subject3D.y);
 
       // project mark
