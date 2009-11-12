@@ -24,18 +24,21 @@ class distanceField
 private:
   cameraImages * ci;
   IplImage * field;
+  IplImage * mask;
+  IplImage * vis;
   CvPoint origin;
   int depth;
-  double calcDistance(CvPoint3D32f a, CvPoint3D32f b) { return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-a.z)); }
+  double calcDistance(CvPoint3D32f a, CvPoint3D32f b) { return sqrt(a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z)); }
 public:
-  IplImage * mask;
-
   distanceField(cameraImages * c)
   {
     ci = c;
     field = cvCreateImage(ci->getImageSize(), IPL_DEPTH_16U, 1);
     mask = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1);
-    cvSet(field, cvScalarAll(255));
+    vis = cvCreateImage(ci->getImageSize(), IPL_DEPTH_16U, 1);
+    cvSetZero(field);
+    cvSet(mask, cvScalarAll(255));
+    cvSetZero(vis);
     origin = cvPoint(0, 0);
     depth = 16;
   }
@@ -82,11 +85,13 @@ public:
 	{
 	  CvScalar cur = cvGet2D(field, row, col);
 	  cur = cvScalarAll((cur.val[0] - nearest) * ratio);
-	  cvSet2D(field, row, col, cur);
+	  cvSet2D(vis, row, col, cur);
 	}
 
     return field;
   }
+
+  IplImage * getVisibleImage() { return vis; }
 
   int setMask(IplImage * m) { cvCopy(m, mask); return 0; }
 };
@@ -182,17 +187,13 @@ int main(void)
       std::vector <std::pair <long long, std::pair <int, int> > > distances;
 
       cvCvtColor(ci->getIntensityImg(), color, CV_GRAY2BGR);
-
       fd->faceDetect(ci->getIntensityImg(), &center, &radius);
-      getArmImage(img, arm);
-
       face = ci->getCoordinate(center);
-
       res = human->track();
+      getArmImage(human->getResult(), arm);
 
       if (res == 0)
 	{
-
 	  for (int i=0; i<arm->height; i++)
 	    for (int j=0; j<arm->width; j++)
 	      {
@@ -215,25 +216,17 @@ int main(void)
 	      CvPoint currentPoint = cvPoint(distances[i].second.second, distances[i].second.first);
 	      CvPoint3D32f tmpCoord = ci->getCoordinate(currentPoint);
 
-#ifdef DEBUG_PRINT_COORD
-	      std::cout << i << "th far point, " << tmpCoord.x << ", " << tmpCoord.y << ", " << tmpCoord.z << std::endl;
-#endif
-
 	      int greenDepth = 255 - ((double)255/(double)numFar) * (double)i;
 	      cvCircle(color, currentPoint, 1, CV_RGB(0, greenDepth, 0));
 	    }
-
-#ifdef DEBUG_PRINT_COORD
-	  CvPoint3D32f tmpCoord = ci->getCoordinate(center);
-	  std::cout << "face point, " << tmpCoord.x << ", " << tmpCoord.y << ", " << tmpCoord.z << std::endl;
-#endif
 
 	  // draw circle on face
 	  cvCircle(color, center, radius, CV_RGB(127, 127, 255));
 
 	  // calculate distance field
 	  distField->setMask(human->getResult());
-	  distanceImg = distField->calculate(cvPoint(ci->getIntensityImg()->height/2, ci->getIntensityImg()->width/2));
+	  distField->calculate(center);
+	  distanceImg = distField->getVisibleImage();
 
 	  cvShowImage("distanceField", distanceImg);
 	  cvShowImage("colorwin", color);
