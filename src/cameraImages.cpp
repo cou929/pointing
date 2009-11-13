@@ -35,27 +35,27 @@ int cameraImages::initialize()
 
   // print version of driver
   SR_GetVersion(version);
-  printf("libusbSR version: %d.%d.%d.%d\n", version[3], version[2], version[1], version[0]);
+  fprintf(stderr, "libusbSR version: %d.%d.%d.%d\n", version[3], version[2], version[1], version[0]);
 
   // set camera initial settings
   res = SR_OpenUSB(&srCam, 0);
-  printf("SR_OpenUSB() called result:%d\n",res);
+  fprintf(stderr, "SR_OpenUSB() called result:%d\n",res);
   res = SR_SetIntegrationTime(srCam, 20);
-  printf("SetIntegrationTime result:%d\n", res);
+  fprintf(stderr, "SetIntegrationTime result:%d\n", res);
   res = SR_SetModulationFrequency(srCam, MF_20MHz);
-  printf("SetModulationFrequency result:%d\n", res);
+  fprintf(stderr, "SetModulationFrequency result:%d\n", res);
   //  res = SR_SetAutoExposure(srCam, 5,255,10,45);
-  printf("SetAutoExposure result:%d\n",res);
+  fprintf(stderr, "SetAutoExposure result:%d\n",res);
   res = SR_SetAmplitudeThreshold(srCam, 40);
-  printf("SetSetAmplitudeThreshold result:%d\n", res);
+  fprintf(stderr, "SetSetAmplitudeThreshold result:%d\n", res);
 
   // set acquire mode
   res = SR_SetMode(srCam, AM_COR_FIX_PTRN|AM_DENOISE_ANF|AM_CONF_MAP|AM_CONV_GRAY);
-  printf("SetMode result:%d\n", res);
+  fprintf(stderr, "SetMode result:%d\n", res);
 
   // get image list
   res = SR_GetImageList(srCam, &imgEntryArr);
-  printf("Number of images:%d\n", res);
+  fprintf(stderr, "Number of images:%d\n", res);
 
   // set width and height
   width = SR_GetCols(srCam);
