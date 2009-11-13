@@ -87,7 +87,6 @@ int main(void)
 
   /////////////////////
   faceDetector * fd = new faceDetector(ci->getImageSize());
-  IplImage *arm = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1); // FIX LATER
   IplImage *color = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 3);
   IplImage * distanceImg;
   CvPoint center;
@@ -124,7 +123,7 @@ int main(void)
 	  int loopcount = std::min(numFar, (int)distances.size());
 	  for (int i=0; i<loopcount; i++)
 	    {
-	      int greenDepth = 255 - ((double)255/(double)numFar) * (double)i;
+	      int greenDepth = 255 - ((double)255/(double)loopcount) * (double)i;
 	      cvCircle(color, cvPoint(distances[i][1], distances[i][2]), 1, CV_RGB(0, greenDepth, 0));
 	    }
 
