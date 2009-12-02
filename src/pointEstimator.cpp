@@ -23,8 +23,6 @@ using namespace cor;
 int main(void) {
   cameraImages *ci = new cameraImages();
   line3DCv *pointingLine = new line3DCv();
-  CvPoint fingertip2D, elbow2D, subject2D;
-  CvPoint3D32f fingertip3D, elbow3D, subject3D;
 
   coordinateShifter *cs = new coordinateShifter();
   double Tx, Ty, Tz, Rx, Ry, Rz, F;
@@ -104,7 +102,7 @@ int main(void) {
       int loopcount = std::min(numFar, (int)distances.size());
       for (int i=0; i<loopcount; i++)
         {
-          int greenDepth = 255 - ((double)255/(double)loopcount) * (double)i;
+          int greenDepth = 255 - (int)(((double)255/(double)loopcount) * (double)i);
           cvCircle(color, cvPoint(distances[i][1], distances[i][2]), 1, CV_RGB(0, greenDepth, 0));
         }
 
@@ -114,21 +112,26 @@ int main(void) {
       cvShowImage("distanceField", distanceImg);
       cvShowImage("colorwin", color);
       cvShowImage("human", human->getResult());
+
+      key = cvWaitKey(10);
+      if (key == 'q')
+	break;
     }
-
-    cvShowImage("confidenceMap", ci->getConfidenceMap());
-
-    // release memory
-    cvDestroyWindow("Depth");
-    cvDestroyWindow("Intensity");
-    cvDestroyWindow("Result");
-    cvDestroyWindow("arm");
-    cvDestroyWindow("centroid");
-    delete ci;
-    delete pointingLine;
-    delete cs;
-    delete prj;
-    delete human;
-
-    return 0;
   }
+
+  cvShowImage("confidenceMap", ci->getConfidenceMap());
+
+  // release memory
+  cvDestroyWindow("Depth");
+  cvDestroyWindow("Intensity");
+  cvDestroyWindow("Result");
+  cvDestroyWindow("arm");
+  cvDestroyWindow("centroid");
+  delete ci;
+  delete pointingLine;
+  delete cs;
+  delete prj;
+  delete human;
+
+  return 0;
+}

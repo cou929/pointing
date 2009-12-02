@@ -2,6 +2,8 @@
 #define __DISTANCE_FIELD_H_
 
 #include <vector>
+#include <queue>
+#include <algorithm>
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include "cameraImages.h"

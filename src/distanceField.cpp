@@ -20,8 +20,8 @@ IplImage *distanceField::calculate(CvPoint origin) {
   bool visited[size.height][size.width];
   int dirx[4] = {0, 1, 0, -1};
   int diry[4] = {-1, 0, 1, 0};
-  const double FAR_INF = INT_MAX;
-  double nearest = DBL_MAX, farthest = 0;
+  const int FAR_INF = INT_MAX;
+  int nearest = INT_MAX, farthest = 0;
 
   cvSetZero(field);
   distances.clear();
@@ -37,7 +37,7 @@ IplImage *distanceField::calculate(CvPoint origin) {
   q.push(make_node(0, origin.x, origin.y));
 
   while (!q.empty()) {
-    node current = q.top;
+    node current = q.top();
     q.pop();
 
     visited[current[1]][current[2]] = true;
@@ -50,7 +50,7 @@ IplImage *distanceField::calculate(CvPoint origin) {
           isValidCoord(ci->getCoordinate(cvPoint(next[1], next[2]))) &&
           !visited[next[1]][next[2]] &&
           maskPix.val[0] != 0) {
-        next[0] = current[0] + calcDistance(current[1], current[2], next[1], next[2]);
+        next[0] = current[0] + (int)calcDistance(ci->getCoordinate(current[1], current[2]), ci->getCoordinate(next[1], next[2]));
 
         if (distances[next[1]][next[2]] == FAR_INF)
           q.push(next);
@@ -65,7 +65,7 @@ IplImage *distanceField::calculate(CvPoint origin) {
   for (int row=0; row<size.height; row++)
     for (int col=0; col<size.width; col++) {
       int d = 0;
-      d = (distances[row][col] == FAR_INF) : 0 ? distances[row][col];
+      d = (distances[row][col] == FAR_INF) ? 0 : distances[row][col];
       cvSet2D(field, row, col, cvScalarAll(d));
     }
 
