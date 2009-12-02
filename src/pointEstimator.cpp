@@ -15,7 +15,6 @@
 #include "pointProjector.h"
 #include "coordinateShifter.h"
 
-using namespace std;
 using namespace point;
 using namespace prj;
 using namespace cor;
@@ -108,7 +107,6 @@ int main(void) {
         continue;
 
       // calculate intersection of pointing line and subject object
-      //	  subject3D = calcCoordinateOnPanel(3500, fingertip3D, pointingLine->directionVecror);
       subject3D = getMarkCoord(pointingLine, ci);
       if (subject3D.x == -1)
         continue;

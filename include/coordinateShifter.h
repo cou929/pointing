@@ -14,7 +14,6 @@
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
-using namespace std;
 
 namespace cor
 {

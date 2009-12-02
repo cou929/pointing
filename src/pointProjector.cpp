@@ -1,20 +1,4 @@
-// ~moriyama/projects/sr4000/trunk/src/pointProjector.cpp
-// http://svn.xp-dev.com/svn/cou929_sakanelab/sr4000/trunk/src/pointProjector.cpp
-//
-// 2009-01-16 change name from 'projector' to 'pointProjector'
-// 2009-01-10 fix function 'convertOriginLeftTop', a sign was inversed.
-// 2008-12-17 add function 'convertOriginLeftTop'
-// 2008-12-16 add pointIndex process in 'drawPoint'
-// 2008-12-15 add parameters, backgroundColor and pointColor
-// 2008-12-06
-// Kousei MORIYAMA
-//
-// projector class
-
-
 #include "pointProjector.h"
-
-using namespace std;
 
 namespace prj
 {
@@ -91,7 +75,7 @@ int pointProjector::hidePoint(CvPoint point)
   //
   // Hide point which coordinate is 'point'.
 
-  list <CvPoint>::iterator it;
+  std::list <CvPoint>::iterator it;
 
   it = getPosition(point);
   if (it == pointList.end())
@@ -117,7 +101,7 @@ int pointProjector::show()
   return 0;
 }
 
-list <CvPoint>::iterator pointProjector::getPosition(CvPoint point)
+std::list <CvPoint>::iterator pointProjector::getPosition(CvPoint point)
 {
   // input: coordinate, CvPoint
   // output: none
@@ -126,7 +110,7 @@ list <CvPoint>::iterator pointProjector::getPosition(CvPoint point)
   // If pointList has'point', returns iterator which points that,
   // else returns itarator which points end of list.
 
-  list <CvPoint>::iterator it;
+  std::list <CvPoint>::iterator it;
   double xDistance, yDistance;
   double squaredRadius = pointRadius*pointRadius;
 
@@ -147,7 +131,7 @@ list <CvPoint>::iterator pointProjector::getPosition(CvPoint point)
   return it;
 }
 
-list <CvPoint>::iterator pointProjector::getPosition(int x, int y)
+std::list <CvPoint>::iterator pointProjector::getPosition(int x, int y)
 {
   return getPosition(cvPoint(x, y));
 }
@@ -160,7 +144,7 @@ int pointProjector::hasPoint(CvPoint point)
   //
   // If pointList has'point', returns 1, else 0.
 
-  list <CvPoint>::iterator it;
+  std::list <CvPoint>::iterator it;
   int ret = 0;
 
   it = getPosition(point);
@@ -184,7 +168,7 @@ int pointProjector::printPointCoordinate(enum COORDINATE_ORIGIN origin)
   //
   // Print coordinates that is contained in the 'pointList'.
 
-  list <CvPoint>::iterator it;
+  std::list <CvPoint>::iterator it;
   CvPoint result;
 
   for (it=pointList.begin(); it!=pointList.end(); it++)
@@ -207,7 +191,7 @@ int pointProjector::saveFile(char *fileName)
   // Save 'pointList' coordinates to the file
 
   FILE *fp;
-  list <CvPoint>::iterator it;
+  std::list <CvPoint>::iterator it;
 
   fp = fopen(fileName, "w");
   if(fp == NULL)

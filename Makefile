@@ -1,12 +1,13 @@
 CXXFLAGS += -Wall -Wextra -Iinclude
 LDFLAGS += -lcxcore -lcv -lhighgui -lcvaux -lmesasr
-OBJS = ./src/cameraImages.o ./src/funcPointing.o ./src/faceDetector.o ./src/regionDetector.o ./src/regionTracker.o ./src/pointProjector.o ./src/coordinateShifter.o ./src/line.o
+SRCD = ./src/
+OBJS = $(SRCD)cameraImages.o $(SRCD)funcPointing.o $(SRCD)faceDetector.o $(SRCD)regionDetector.o $(SRCD)regionTracker.o $(SRCD)pointProjector.o $(SRCD)coordinateShifter.o $(SRCD)line.o
 TARGETS = pointEstimator calibDataCollector
 
 all: $(TARGETS)
 
-$(TARGETS): $(OBJS) ./src/$(TARGETS:=.cpp)
-	g++ $(CXXFLAGS) -o ../$@ $(OBJS) $(LDFLAGS)
+$(TARGETS): $(OBJS) $(SRCD)pointEstimator.cpp $(SRCD)calibDataCollector.cpp
+	g++ $(CXXFLAGS) -o $@ $(SRCD)$@.cpp $(OBJS) $(LDFLAGS)
 
 .PHONY: clean
 clean:

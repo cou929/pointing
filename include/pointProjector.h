@@ -20,8 +20,6 @@
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 
-using namespace std;
-
 namespace prj
 {
 
@@ -36,7 +34,7 @@ private:
   int pointRadius;             // radius of point which projected
   int backgroundColor;         // background color
   int pointColor;              // point color
-  list <CvPoint> pointList;    // list of points which is in the image
+  std::list <CvPoint> pointList;    // list of points which is in the image
 
 protected:
   char *windowName;           // display window name
@@ -54,8 +52,8 @@ public:
   int hidePoint(CvPoint point);
   int hidePoint(int x, int y);
   int show();
-  list <CvPoint>::iterator getPosition(CvPoint point);
-  list <CvPoint>::iterator getPosition(int x, int y);
+  std::list <CvPoint>::iterator getPosition(CvPoint point);
+  std::list <CvPoint>::iterator getPosition(int x, int y);
   int hasPoint(CvPoint point);
   int hasPoint(int x, int y);
   int printPointCoordinate(enum COORDINATE_ORIGIN origin = LEFT_TOP);

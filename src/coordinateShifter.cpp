@@ -1,19 +1,10 @@
-// ~moriyama/projects/sr3000/trunk/src/coordinateShifter.cpp
-// http://svn.xp-dev.com/svn/cou929_repo/master/sr4000/trunk/src/coordinateShifter.cpp
-// 
-// 2008-12-09 based on 'projection.cpp'
-// Kosuei MORIYAMA
-//
 // shift camera coordinate to projector coordinate
-//
 
 #include <cstdio>
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 #include "coordinateShifter.h"
-
-using namespace std;
 
 namespace cor
 {
