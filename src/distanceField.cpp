@@ -1,10 +1,8 @@
 #include "distanceField.h"
 
-namespace point
-{
+namespace point {
 
-distanceField::distanceField(cameraImages * c)
-{
+distanceField::distanceField(cameraImages *c) {
   ci = c;
   field = cvCreateImage(ci->getImageSize(), IPL_DEPTH_16U, 1);
   mask = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1);
@@ -16,8 +14,7 @@ distanceField::distanceField(cameraImages * c)
   depth = 16;
 }
 
-IplImage * distanceField::calculate(CvPoint origin)
-{
+IplImage *distanceField::calculate(CvPoint origin) {
   int row, col;
   CvSize size = ci->getImageSize();
   CvPoint3D32f current, origin3d;
@@ -34,23 +31,21 @@ IplImage * distanceField::calculate(CvPoint origin)
   for (row=0; row<size.height; row++)
     for (col=0; col<size.width; col++)
       {
-	current = ci->getCoordinate(col, row);
-	CvScalar maskPix = cvGet2D(mask, row, col);
+        current = ci->getCoordinate(col, row);
+        CvScalar maskPix = cvGet2D(mask, row, col);
 
-	if (isValidCoord(current) &&  maskPix.val[0] != 0)
-	  {
-	    double d = calcDistance(current, origin3d);
-	    cvSet2D(field, row, col, cvScalarAll(d));
+        if (isValidCoord(current) &&  maskPix.val[0] != 0)
+          {
+            double d = calcDistance(current, origin3d);
+            cvSet2D(field, row, col, cvScalarAll(d));
 
-	    nearest = std::min(nearest, d);
-	    farthest = std::max(farthest, d);
+            nearest = std::min(nearest, d);
+            farthest = std::max(farthest, d);
 
-	    std::vector <int> tmp(3, 0);
-	    tmp[0] = (int)d;
-	    tmp[1] = col;
-	    tmp[2] = row;
-	    distances.push_back(tmp);
-	  }
+            std::vector <int> tmp(3, 0);
+            tmp[0] = (int)d, tmp[1] = col, tmp[2] = row;
+            distances.push_back(tmp);
+          }
       }
 
   adjustDistImgRange(nearest, farthest);
@@ -58,8 +53,7 @@ IplImage * distanceField::calculate(CvPoint origin)
   return field;
 }
 
-int distanceField::adjustDistImgRange(double nearest, double farthest)
-{
+int distanceField::adjustDistImgRange(double nearest, double farthest) {
   // Convert range of distance value for adjusting image depth
   // to view the result visibly
 
@@ -71,9 +65,9 @@ int distanceField::adjustDistImgRange(double nearest, double farthest)
   for (row=0; row<size.height; row++)
     for (col=0; col<size.width; col++)
       {
-	CvScalar cur = cvGet2D(field, row, col);
-	cur = cvScalarAll((cur.val[0] - nearest) * ratio);
-	cvSet2D(vis, row, col, cur);
+        CvScalar cur = cvGet2D(field, row, col);
+        cur = cvScalarAll((cur.val[0] - nearest) * ratio);
+        cvSet2D(vis, row, col, cur);
       }
 
   return 0;
