@@ -20,8 +20,7 @@ using namespace point;
 using namespace prj;
 using namespace cor;
 
-int main(void)
-{
+int main(void) {
   cameraImages *ci = new cameraImages();
   line3DCv *pointingLine = new line3DCv();
   CvPoint fingertip2D, elbow2D, subject2D;
@@ -51,18 +50,16 @@ int main(void)
   img = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1);
 
   // prepare coordinate shifter
-  if((fp = fopen(filename, "r")) == NULL)
-    {
-      fprintf(stderr, "ERROR: cannot open parameter\n");
-      return -1;
-    }
+  if((fp = fopen(filename, "r")) == NULL) {
+    fprintf(stderr, "ERROR: cannot open parameter\n");
+    return -1;
+  }
 
   if(fgets(line, 1000, fp) != NULL)
-    if((res = sscanf(line, "(#f(%lf %lf %lf) #f(%lf %lf %lf) %lf)\n", &Tx, &Ty, &Tz, &Rx, &Ry, &Rz, &F)) < 1)
-      {
-	fprintf(stderr, "ERROR: cannot read parameter\nres: %d\n", res);
-	return -1;
-      }
+    if((res = sscanf(line, "(#f(%lf %lf %lf) #f(%lf %lf %lf) %lf)\n", &Tx, &Ty, &Tz, &Rx, &Ry, &Rz, &F)) < 1) {
+      fprintf(stderr, "ERROR: cannot read parameter\nres: %d\n", res);
+      return -1;
+    }
   fclose(fp);
 
   // set parameter
@@ -85,57 +82,55 @@ int main(void)
   cvSetMouseCallback ("Depth", on_mouse_getDepth, ci);
   cvSetMouseCallback ("Intensity", on_mouse_pointing, ci->getDepthImg());
 
-  while(1)
-    {
-      // acquire current frame
-      ci->acquire();
+  while(1) {
+    // acquire current frame
+    ci->acquire();
 
-      // track human region
-      res = human->track();
+    // track human region
+    res = human->track();
 
-      if(res == 0)
-	{
-	  // get human region
-	  img = human->getResult();
+    if(res == 0) {
+      // get human region
+      img = human->getResult();
 
-	  // get arm points
-	  getArmPoints(img, &fingertip2D, &elbow2D);
+      // get arm points
+      getArmPoints(img, &fingertip2D, &elbow2D);
 
-	  // get 3D coordinate of arm points
-	  fingertip3D = ci->getCoordinate(fingertip2D);
-	  elbow3D = ci->getCoordinate(elbow2D);
-	  if(fingertip3D.x == -1 || elbow3D.x == -1)
-	    continue;
+      // get 3D coordinate of arm points
+      fingertip3D = ci->getCoordinate(fingertip2D);
+      elbow3D = ci->getCoordinate(elbow2D);
+      if(fingertip3D.x == -1 || elbow3D.x == -1)
+        continue;
 
-	  // calculate pointing direction
-	  pointingLine->setLine(elbow3D, fingertip3D);
-	  if(!pointingLine->isValid())
-	    continue;
+      // calculate pointing direction
+      pointingLine->setLine(elbow3D, fingertip3D);
+      if(!pointingLine->isValid())
+        continue;
 
-	  // calculate intersection of pointing line and subject object
-	  //	  subject3D = calcCoordinateOnPanel(3500, fingertip3D, pointingLine->directionVecror);
-	  subject3D = getMarkCoord(pointingLine, ci);
-	  if (subject3D.x == -1)
-	    continue;
+      // calculate intersection of pointing line and subject object
+      //	  subject3D = calcCoordinateOnPanel(3500, fingertip3D, pointingLine->directionVecror);
+      subject3D = getMarkCoord(pointingLine, ci);
+      if (subject3D.x == -1)
+        continue;
 
-	  // calcurate coordinate where to projector points
-	  subject2D = cs->world2img((-1)*subject3D.z, (-1)*subject3D.x, subject3D.y);
+      // calcurate coordinate where to projector points
+      subject2D = cs->world2img((-1)*subject3D.z, (-1)*subject3D.x, subject3D.y);
 
-	  // project mark
-	  prj->showPoint(subject2D);
+      // project mark
+      prj->showPoint(subject2D);
 
-	  cvShowImage("Result", img);
-	}
-
-      // show images
-      cvShowImage("Depth", ci->getDepthImg());
-      cvShowImage("Intensity", ci->getIntensityImg());
-
-      // key handling
-      key = cvWaitKey(10);
-      if(key == 'q')
-	break;
+      cvShowImage("Result", img);
     }
+
+    // show images
+    cvShowImage("Depth", ci->getDepthImg());
+    cvShowImage("Intensity", ci->getIntensityImg());
+
+    // key handling
+    key = cvWaitKey(10);
+    if(key == 'q')
+      break;
+  }
 
   // release memory
   cvDestroyWindow("Depth");
