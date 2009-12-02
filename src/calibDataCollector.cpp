@@ -1,13 +1,18 @@
 // Collect data for calibration.
-
 #include <cstdio>
+#include <vector>
+#include <string>
+
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
-#include "libusbSR.h"
-#include "definesSR.h"
-#include "pointing.h"
+
+#include "cameraImages.h"
+#include "regionTracker.h"
+#include "faceDetector.h"
+#include "funcPointing.h"
 #include "pointProjector.h"
+#include "coordinateShifter.h"
 
 using namespace point;
 using namespace prj;
@@ -25,7 +30,7 @@ public:
 class calibData
 {
 private:
-  vector <string> data;
+  std::vector <std::string> data;
   int prjFlg, camFlg;
   CvPoint prj;
   CvPoint3D32f cam;
@@ -142,7 +147,7 @@ int calibData::setData()
 int calibData::save()
 {
   FILE *fp;
-  vector <string>::iterator it;
+  std::vector <std::string>::iterator it;
 
   fp = fopen(fn, "w");
   if(fp == NULL)

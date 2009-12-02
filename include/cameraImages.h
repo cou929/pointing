@@ -33,12 +33,13 @@ class cameraImages
   int width;
   int height;
   int pich;
+  int confMapThreshold;
 
-  int checkCoordinateRange(int x, int y)
+  int checkCoordinateRange(int column, int row)
   {
-    if(x >= 0 && y >= 0 && x < width && y < height)
+    if(column >= 0 && row >= 0 && column < width && row < height)
       return 0;
-    else 
+    else
       return -1;
   }
 
@@ -47,8 +48,6 @@ class cameraImages
   ~cameraImages();
 
   int initialize();
-  // input: none
-  // return: 0 if succeed
   // open camera, initialize, allocate memory for IplImages and set pointer
   //
   // TODO:
@@ -56,8 +55,6 @@ class cameraImages
   // - contain window making process, if it can be
 
   int acquire();
-  // input: none
-  // return: 0 if succeed
   // acquire images from camera to PC, calcurate XYZ coordinate of each pixel and convert amplitude image to IplImage.
   // call this function at beginning of while loop.
   //
@@ -68,11 +65,14 @@ class cameraImages
   IplImage* getIntensityImg();
   IplImage* getConfidenceMap();
   int getIntensityVal(int x, int y);
-  CvPoint3D32f getCoordinate(int x, int y);
-  CvPoint3D32f getCoordinate(CvPoint point);
+  CvPoint3D32f getCoordinate(int x, int y, bool useConfFilter = true);
+  CvPoint3D32f getCoordinate(CvPoint point, bool useConfFilter = true);
   int getConfidenceVal(int x, int y);
   int setAmpImgThreshold(int th);
   CvSize getImageSize();
+  int setConfMapThreshold(int th) {confMapThreshold = th; return 0;}
+  // Set threshold of confidence value. If certain pixel's confidence value is under the threshold,
+  // the pixel is considerd as invalid and return -1 as error value.
 };
 
 }

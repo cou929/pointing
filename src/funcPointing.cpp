@@ -562,7 +562,6 @@ CvPoint DecideKakupt(CvPoint _pt[] , int _ptNow)
   x2=(double)_pt[_ptNow - 1].x;
   y2=(double)_pt[_ptNow - 1].y;
 
-  //printf("%f",x1);
   if (x1 == x2) {
     a = 1;
     b = 0;
@@ -576,11 +575,6 @@ CvPoint DecideKakupt(CvPoint _pt[] , int _ptNow)
     c = _b;
   }
 
-
-  // printf("a=%f\n",a);
-  // printf("b=%f\n",b);
-  // printf("c=%f\n",c);
-
   maxd = -1;
   for (i= 0; i < _ptNow ; i++){
     x0 = (double)_pt[i].x;
@@ -588,12 +582,8 @@ CvPoint DecideKakupt(CvPoint _pt[] , int _ptNow)
     //点と直線の関係式で距離を出す
     d = fabs(a * x0 + b * y0 + c) / sqrt ( a * a + b * b) ;
 
-    //printf("d=%f\n",d);
-    
     if (d <= maxd) continue;
 
-    // printf("ok");
-    
     Anspt = _pt[i]; 
 
     maxd = d;
