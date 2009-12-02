@@ -15,38 +15,59 @@ distanceField::distanceField(cameraImages *c) {
 }
 
 IplImage *distanceField::calculate(CvPoint origin) {
-  int row, col;
+  std::priority_queue <node, std::vector <node>, std::greater<node> > q;
   CvSize size = ci->getImageSize();
-  CvPoint3D32f current, origin3d;
+  bool visited[size.height][size.width];
+  int dirx[4] = {0, 1, 0, -1};
+  int diry[4] = {-1, 0, 1, 0};
+  const double FAR_INF = INT_MAX;
   double nearest = DBL_MAX, farthest = 0;
 
   cvSetZero(field);
   distances.clear();
+  memset(visited, false, sizeof(visited));
 
-  origin3d = ci->getCoordinate(origin);
-
-  if (!isValidCoord(origin3d))
+  if (!isInRange(origin.x, origin.y) || !isValidCoord(ci->getCoordinate(origin)))
     return field;
-  
-  for (row=0; row<size.height; row++)
-    for (col=0; col<size.width; col++)
-      {
-        current = ci->getCoordinate(col, row);
-        CvScalar maskPix = cvGet2D(mask, row, col);
 
-        if (isValidCoord(current) &&  maskPix.val[0] != 0)
-          {
-            double d = calcDistance(current, origin3d);
-            cvSet2D(field, row, col, cvScalarAll(d));
+  for (int row=0; row<size.height; row++)
+    for (int col=0; col<size.width; col++)
+      distances.push_back(make_node(FAR_INF, row, col));
 
-            nearest = std::min(nearest, d);
-            farthest = std::max(farthest, d);
+  q.push(make_node(0, origin.x, origin.y));
 
-            std::vector <int> tmp(3, 0);
-            tmp[0] = (int)d, tmp[1] = col, tmp[2] = row;
-            distances.push_back(tmp);
-          }
+  while (!q.empty()) {
+    node current = q.top;
+    q.pop();
+
+    visited[current[1]][current[2]] = true;
+
+    for (int i=0; i<4; i++) {
+      node next = make_node(current[0], current[1] + dirx[i], current[2] + diry[i]);
+      CvScalar maskPix = cvGet2D(mask, next[1], next[2]);
+
+      if (isInRange(next[1], next[2]) &&
+          isValidCoord(ci->getCoordinate(cvPoint(next[1], next[2]))) &&
+          !visited[next[1]][next[2]] &&
+          maskPix.val[0] != 0) {
+        next[0] = current[0] + calcDistance(current[1], current[2], next[1], next[2]);
+
+        if (distances[next[1]][next[2]] == FAR_INF)
+          q.push(next);
+        distances[next[1]][next[2]] = std::min(distances[next[1]][next[2]], next[0]);
+
+        nearest = std::min(nearest, next[0]);
+        farthest = std::max(farthest, next[0]);
       }
+    }
+  }
+
+  for (int row=0; row<size.height; row++)
+    for (int col=0; col<size.width; col++) {
+      int d = 0;
+      d = (distances[row][col] == FAR_INF) : 0 ? distances[row][col];
+      cvSet2D(field, row, col, cvScalarAll(d));
+    }
 
   adjustDistImgRange(nearest, farthest);
 

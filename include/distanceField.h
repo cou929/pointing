@@ -19,8 +19,12 @@ class distanceField
   CvPoint origin;
   int depth;
   std::vector <std::vector <int> > distances;
+  typedef std::vector <int> node;
+
   double calcDistance(CvPoint3D32f a, CvPoint3D32f b) { return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z)); }
+
   int adjustDistImgRange(double nearest, double farthest);
+
   int isValidCoord(CvPoint3D32f p) {
     if (p.x != -1 && p.y != -1 && p.z != -1)
       return 1;
@@ -28,11 +32,25 @@ class distanceField
       return 0;
   }
 
+  bool isInRange(int x, int y) {
+    if (0 <= x && x < ci->getImageSize().height && 0 <= y && y < ci->getImageSize().width)
+      return true;
+    return false;
+  }
+
+  node make_node(int distance, int x, int y) {
+    node tmp(3, 0);
+    tmp[0] = distance, tmp[1] = x, tmp[2] = y;
+    return tmp;
+  }
+
  public:
   distanceField(cameraImages * c);
   ~distanceField() { cvReleaseImage(&field); }
 
   IplImage * calculate(CvPoint origin = cvPoint(0, 0));
+  // calculate shortest paths for each pixels in the region from origin.
+  // using dijkstra algorithm
 
   IplImage * getVisibleImage() { return vis; }
 
