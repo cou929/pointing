@@ -6,11 +6,9 @@ distanceField::distanceField(cameraImages *c) {
   ci = c;
   field = cvCreateImage(ci->getImageSize(), IPL_DEPTH_16U, 1);
   mask = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 1);
-  distance = cvCreateImage(ci->getImageSize(), IPL_DEPTH_16U, 1);
   path_count = cvCreateImage(ci->getImageSize(), IPL_DEPTH_16U, 1);
   cvSetZero(field);
   cvSet(mask, cvScalarAll(255));
-  cvSetZero(distance);
   cvSetZero(path_count);
   origin = cvPoint(0, 0);
   depth = 16;
@@ -19,7 +17,7 @@ distanceField::distanceField(cameraImages *c) {
 IplImage *distanceField::calculate(CvPoint origin) {
   std::priority_queue <node, std::vector <node>, std::greater<node> > q;
   CvSize size = ci->getImageSize();
-  bool visited[size.height][size.width];
+  int distance_memo[size.height][size.width];
   int come_from[size.height][size.width][2];
   int dirx[4] = {0, 1, 0, -1};
   int diry[4] = {-1, 0, 1, 0};
@@ -28,57 +26,58 @@ IplImage *distanceField::calculate(CvPoint origin) {
 
   cvSetZero(field);
   distances.clear();
-  memset(visited, false, sizeof(visited));
-  memset(come_from, -1, sizeof(come_from));
+
+  for (int row=0; row<size.height; row++)
+    for (int col=0; col<size.width; col++) {
+      distance_memo[row][col] = FAR_INF;
+      come_from[row][col][0] = come_from[row][col][0] = -1;
+    }
 
   if (!isInRange(origin.x, origin.y) || !isValidCoord(ci->getCoordinate(origin)))
     return field;
 
-  for (int row=0; row<size.height; row++)
-    for (int col=0; col<size.width; col++)
-      distances.push_back(make_node(FAR_INF, row, col));
-
   q.push(make_node(0, origin.x, origin.y));
+  distance_memo[origin.x][origin.y] = 0;
 
   while (!q.empty()) {
     node current = q.top();
     q.pop();
 
-    visited[current[1]][current[2]] = true;
-
     for (int i=0; i<4; i++) {
       node next = make_node(current[0], current[1] + dirx[i], current[2] + diry[i]);
-      CvScalar maskPix = cvGet2D(mask, next[1], next[2]);
 
-      if (isInRange(next[1], next[2]) &&
-          isValidCoord(ci->getCoordinate(cvPoint(next[1], next[2]))) &&
-          !visited[next[1]][next[2]] &&
-          maskPix.val[0] != 0) {
-        next[0] = current[0] + (int)calcDistance(ci->getCoordinate(current[1], current[2]), ci->getCoordinate(next[1], next[2]));
+      if (isInRange(next[1], next[2])) {
+	CvScalar maskPix = cvGet2D(mask, next[1], next[2]);
 
-	if (distances[next[1]][next[2]] > next[0]) {
-	  distances[next[1]][next[2]] = next[0];
-	  come_from[next[1]][next[2]][0] = current[1], come_from[next[1]][next[2]][0] = current[2];
-	  if (distances[next[1]][next[2]] == FAR_INF)
-	    q.push(next);
+	if (isValidCoord(ci->getCoordinate(next[1], next[2])) && maskPix.val[0] != 0) {
+	  next[0] = current[0] + (int)calcDistance(ci->getCoordinate(current[1], current[2]), ci->getCoordinate(next[1], next[2]));
+
+	  if (distance_memo[next[1]][next[2]] > next[0]) {
+	    if (distance_memo[next[1]][next[2]] == FAR_INF)
+	      q.push(next);
+	    distance_memo[next[1]][next[2]] = next[0];
+	    come_from[next[1]][next[2]][0] = current[1], come_from[next[1]][next[2]][0] = current[2];
+	  }
+
+	  nearest = std::min(nearest, next[0]);
+	  farthest = std::max(farthest, next[0]);
 	}
-
-        nearest = std::min(nearest, next[0]);
-        farthest = std::max(farthest, next[0]);
       }
     }
   }
 
   for (int row=0; row<size.height; row++)
     for (int col=0; col<size.width; col++) {
-      int d = 0;
-      d = (distances[row][col] == FAR_INF) ? 0 : distances[row][col];
+      int d = (distance_memo[row][col] == FAR_INF) ? 0 : distance_memo[row][col];
       cvSet2D(field, row, col, cvScalarAll(d));
+      distances.push_back(make_node(distance_memo[row][col], row, col));
     }
+
+  std::sort(distances.rbegin(), distances.rend());
 
   adjustDistImgRange(nearest, farthest);
 
-  countPaths(origin, &come_from[0][0][0]);
+  //  countPaths(origin, &come_from[0][0][0]);
 
   return field;
 }
@@ -92,7 +91,7 @@ int distanceField::adjustDistImgRange(double nearest, double farthest) {
     for (int col=0; col<size.width; col++) {
       CvScalar cur = cvGet2D(field, row, col);
       cur = cvScalarAll((cur.val[0] - nearest) * ratio);
-      cvSet2D(distance, row, col, cur);
+      cvSet2D(field, row, col, cur);
     }
 
   return 0;

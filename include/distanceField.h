@@ -17,7 +17,6 @@ class distanceField
   cameraImages *ci;
   IplImage *field;
   IplImage *mask;
-  IplImage *distance;
   IplImage *path_count;
   CvPoint origin;
   int depth;
@@ -32,11 +31,10 @@ class distanceField
 
   int countPaths(CvPoint origin, int *come_from);
 
-  int isValidCoord(CvPoint3D32f p) {
-    if (p.x != -1 && p.y != -1 && p.z != -1)
-      return 1;
-    else
-      return 0;
+  bool isValidCoord(CvPoint3D32f p) {
+    if (p.x != -1 && p.y != -1 && p.z == -1)
+      return true;
+    return true;
   }
 
   bool isInRange(int x, int y) {
@@ -59,7 +57,7 @@ class distanceField
   // calculate shortest paths for each pixels in the region from origin.
   // using dijkstra algorithm
 
-  IplImage *getDistanceImage() { return distance; }
+  IplImage *getDistanceImage() { return field; }
   // Returns distance image. If certain pixel is farther from origin pixel,
   // the intensity value of the distance image is larger.
 
@@ -72,7 +70,7 @@ class distanceField
   // Take a binary image, and calculation process skips the pixel
   // which value of mask image is equal to zero.
 
-  std::vector <std::vector <int> > & getDistances() { std::sort(distances.rbegin(), distances.rend()); return distances; }
+  std::vector <std::vector <int> > & getDistances() { return distances; }
   // Returns 2 dimension array. Each row has exactry 3 elements, 0th element is distance, 1st element is column number and
   // 2nd element is row number.
   // The vector is sorted as descending order.

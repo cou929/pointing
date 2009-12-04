@@ -61,29 +61,33 @@ int main(void) {
   cvNamedWindow("Result", CV_WINDOW_AUTOSIZE);
   cvNamedWindow("centroid", CV_WINDOW_AUTOSIZE);
   cvNamedWindow("human", CV_WINDOW_AUTOSIZE);
+  cvNamedWindow("ConfidenceMap",CV_WINDOW_AUTOSIZE);
+  cvNamedWindow("colorwin", 0);
+  cvNamedWindow("distanceField", 0);
+  cvNamedWindow("pathCounts", 0);
+
   cvMoveWindow ("Depth",  windowOrigin.x, windowOrigin.y);
   cvMoveWindow ("Intensity",  windowOrigin.x, windowOrigin.y + 200);
   cvMoveWindow ("Result",  windowOrigin.x + 200, windowOrigin.y);
   cvMoveWindow ("centroid",  windowOrigin.x + 200, windowOrigin.y + 200);
   cvMoveWindow ("human",  windowOrigin.x + 200, windowOrigin.y + 400);
+  cvMoveWindow ("ConfidenceMap",  windowOrigin.x, windowOrigin.y + 400);
+  cvMoveWindow ("colorwin",  windowOrigin.x + 400, windowOrigin.y);
+  cvMoveWindow ("distanceField",  windowOrigin.x + 400, windowOrigin.y + 300);
+  cvMoveWindow ("pathCounts",  windowOrigin.x + 400, windowOrigin.y + 600);
 
   cvSetMouseCallback ("Depth", on_mouse_getDepth, ci);
   cvSetMouseCallback ("Intensity", on_mouse_pointing, ci->getDepthImg());
 
   faceDetector * fd = new faceDetector(ci->getImageSize());
   IplImage *color = cvCreateImage(ci->getImageSize(), IPL_DEPTH_8U, 3);
-  IplImage *distance_image;
-  IplImage *path_count_image;
+  IplImage *distance_image, *path_count_image;
   CvPoint center;
   CvPoint3D32f face;
   int radius;
   int numFar = 1000;
   distanceField * distField = new distanceField(ci);
   std::vector <std::vector <int> > distances;
-  cvNamedWindow("confidenceMap", 0);
-  cvNamedWindow("colorwin", 0);
-  cvNamedWindow("distanceField", 0);
-  cvNamedWindow("pathCounts", 0);
 
   while(1) {
     ci->acquire();
@@ -96,9 +100,8 @@ int main(void) {
     if (res == 0) {
       // calculate distance field
       distField->setMask(human->getResult());
-      distField->calculate(center);
-      distance_image = distField->getDistanceImage();
-      path_count_image = distField->getPathCountImage();
+      distance_image = distField->calculate(center);
+      //      path_count_image = distField->getPathCountImage();
 
       // draw green circles on top numFar-th pixels which are far from face
       distances = distField->getDistances();
@@ -113,16 +116,17 @@ int main(void) {
 
       cvShowImage("colorwin", color);
       cvShowImage("distanceField", distance_image);
-      cvShowImage("pathCounts", path_count_image);
+      //      cvShowImage("pathCounts", path_count_image);
       cvShowImage("human", human->getResult());
-
-      key = cvWaitKey(10);
-      if (key == 'q')
-	break;
     }
-  }
 
-  cvShowImage("confidenceMap", ci->getConfidenceMap());
+    cvShowImage("ConfidenceMap", ci->getConfidenceMap());
+    cvShowImage("Depth", ci->getDepthImg());
+    cvShowImage("Intensity", ci->getIntensityImg());
+    key = cvWaitKey(10);
+    if (key == 'q')
+      break;
+  }
 
   // release memory
   cvDestroyWindow("Depth");
