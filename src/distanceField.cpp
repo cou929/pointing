@@ -78,7 +78,7 @@ IplImage *distanceField::calculate(CvPoint origin) {
 
   adjustDistImgRange(nearest, farthest);
 
-  countPathes(origin, &come_from[0][0][0]);
+  countPaths(origin, &come_from[0][0][0]);
 
   return field;
 }
@@ -98,7 +98,7 @@ int distanceField::adjustDistImgRange(double nearest, double farthest) {
   return 0;
 }
 
-int distanceField::countPathes(CvPoint origin, int *come_from) {
+int distanceField::countPaths(CvPoint origin, int *come_from) {
   std::vector <std::vector <int> > end_points;
   CvSize size = ci->getImageSize();
   int path_count_array[size.height][size.width];

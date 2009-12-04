@@ -30,7 +30,7 @@ class distanceField
   // Convert range of distance value for adjusting image depth
   // to view the result visibly
 
-  int countPathes(CvPoint origin, int *come_from);
+  int countPaths(CvPoint origin, int *come_from);
 
   int isValidCoord(CvPoint3D32f p) {
     if (p.x != -1 && p.y != -1 && p.z != -1)
