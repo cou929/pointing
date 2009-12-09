@@ -37,7 +37,7 @@ class distanceField
   bool isValidCoord(CvPoint3D32f p) {
     if (p.x != -1 && p.y != -1 && p.z == -1)
       return true;
-    return true;
+    return false;
   }
 
   bool isInRange(int x, int y) {
