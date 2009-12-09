@@ -23,7 +23,10 @@ class distanceField
   std::vector <std::vector <int> > distances;
   typedef std::vector <int> node;
 
-  double calcDistance(CvPoint3D32f a, CvPoint3D32f b) { return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z)); }
+  double calcDistance(CvPoint3D32f a, CvPoint3D32f b) { 
+    if (!isValidCoord(a) || !isValidCoord(b)) return 0;
+    return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z)); 
+  }
 
   int adjustDistImgRange(double nearest, double farthest);
   // Convert range of distance value for adjusting image depth
