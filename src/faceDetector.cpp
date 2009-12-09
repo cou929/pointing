@@ -38,6 +38,9 @@ int faceDetector::faceDetect( IplImage* img, CvPoint *center, int *radius )
 {
   int i = 0, ret = 0;
 
+  center->x = center->y = -1;
+  *radius = -1;
+
   cvResize( img, smallImg, CV_INTER_LINEAR );
   cvEqualizeHist( smallImg, smallImg );
   cvClearMemStorage( storage );

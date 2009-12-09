@@ -97,7 +97,7 @@ int main(void) {
     face = ci->getCoordinate(center);
     res = human->track();
 
-    if (res == 0) {
+    if (res == 0 && radius != -1) {
       // calculate distance field
       distField->setMask(human->getResult());
       distance_image = distField->calculate(center);
@@ -107,9 +107,9 @@ int main(void) {
       distances = distField->getDistances();
       int loopcount = std::min(numFar, (int)distances.size());
       for (int i=0; i<loopcount; i++) {
-          int greenDepth = 255 - (int)(((double)255/(double)loopcount) * (double)i);
-          cvCircle(color, cvPoint(distances[i][1], distances[i][2]), 1, CV_RGB(0, greenDepth, 0));
-        }
+        int greenDepth = 255 - (int)(((double)255/(double)loopcount) * (double)i);
+        cvCircle(color, cvPoint(distances[i][1], distances[i][2]), 1, CV_RGB(0, greenDepth, 0));
+      }
 
       // draw circle on face
       cvCircle(color, center, radius, CV_RGB(127, 127, 255));

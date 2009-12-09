@@ -24,21 +24,23 @@ IplImage *distanceField::calculate(CvPoint origin) {
   const int FAR_INF = INT_MAX;
   int nearest = INT_MAX, farthest = 0;
 
+  if (!isInRange(origin.x, origin.y) || !isValidCoord(ci->getCoordinate(origin)))
+    return field;
+
+  // prepare
   cvSetZero(field);
   distances.clear();
 
   for (int row=0; row<size.height; row++)
     for (int col=0; col<size.width; col++) {
       distance_memo[row][col] = FAR_INF;
-      come_from[row][col][0] = come_from[row][col][0] = -1;
+      come_from[row][col][0] = come_from[row][col][1] = -1;
     }
-
-  if (!isInRange(origin.x, origin.y) || !isValidCoord(ci->getCoordinate(origin)))
-    return field;
 
   q.push(make_node(0, origin.x, origin.y));
   distance_memo[origin.x][origin.y] = 0;
 
+  // searching
   while (!q.empty()) {
     node current = q.top();
     q.pop();
@@ -47,37 +49,36 @@ IplImage *distanceField::calculate(CvPoint origin) {
       node next = make_node(current[0], current[1] + dirx[i], current[2] + diry[i]);
 
       if (isInRange(next[1], next[2])) {
-	CvScalar maskPix = cvGet2D(mask, next[1], next[2]);
+        CvScalar maskPix = cvGet2D(mask, next[1], next[2]);
 
-	if (isValidCoord(ci->getCoordinate(next[1], next[2])) && maskPix.val[0] != 0) {
-	  next[0] = current[0] + (int)calcDistance(ci->getCoordinate(current[1], current[2]), ci->getCoordinate(next[1], next[2]));
+        if (isValidCoord(ci->getCoordinate(next[1], next[2])) && maskPix.val[0] != 0) {
+          next[0] = current[0] + (int)calcDistance(ci->getCoordinate(current[1], current[2]), ci->getCoordinate(next[1], next[2]));
 
-	  if (distance_memo[next[1]][next[2]] > next[0]) {
-	    if (distance_memo[next[1]][next[2]] == FAR_INF)
-	      q.push(next);
-	    distance_memo[next[1]][next[2]] = next[0];
-	    come_from[next[1]][next[2]][0] = current[1], come_from[next[1]][next[2]][0] = current[2];
-	  }
+          if (distance_memo[next[1]][next[2]] > next[0]) {
+            if (distance_memo[next[1]][next[2]] == FAR_INF)
+              q.push(next);
+            distance_memo[next[1]][next[2]] = next[0];
+            come_from[next[1]][next[2]][0] = current[1], come_from[next[1]][next[2]][0] = current[2];
+          }
 
-	  nearest = std::min(nearest, next[0]);
-	  farthest = std::max(farthest, next[0]);
-	}
+          nearest = std::min(nearest, next[0]);
+          farthest = std::max(farthest, next[0]);
+        }
       }
     }
   }
 
+  // outputs
   for (int row=0; row<size.height; row++)
     for (int col=0; col<size.width; col++) {
       int d = (distance_memo[row][col] == FAR_INF) ? 0 : distance_memo[row][col];
       cvSet2D(field, row, col, cvScalarAll(d));
       distances.push_back(make_node(distance_memo[row][col], row, col));
     }
-
   std::sort(distances.rbegin(), distances.rend());
-
   adjustDistImgRange(nearest, farthest);
 
-  //  countPaths(origin, &come_from[0][0][0]);
+  countPaths(origin, &come_from[0][0][0]);
 
   return field;
 }
@@ -100,21 +101,28 @@ int distanceField::adjustDistImgRange(double nearest, double farthest) {
 int distanceField::countPaths(CvPoint origin, int *come_from) {
   std::vector <std::vector <int> > end_points;
   CvSize size = ci->getImageSize();
+  int is_referred[size.height][size.width];
   int path_count_array[size.height][size.width];
 
   memset(path_count_array, 0, sizeof(path_count_array));
+  memset(is_referred, 0, sizeof(is_referred));
 
   // search end points of each shortest path
   for (int row=0; row<size.height; row++)
-    for (int col=0; col<size.width; col++) {
-      CvScalar mask_point = cvGet2D(mask, row, col);
-      if (mask_point.val[0] != 0 && come_from[row * size.width + col + 0] == -1 && row != origin.x && col != origin.y) {
-	std::vector <int> tmp(2, 0);
-	tmp[0] = come_from[row * size.width + col + 0];
-	tmp[1] = come_from[row * size.width + col + 1];
-	end_points.push_back(tmp);
+    for (int col=0; col<size.width; col++)
+      if (come_from[(row * size.width + col) * 2 + 0] != -1)
+        is_referred[come_from[(row * size.width + col) * 2 + 0]][come_from[(row * size.width + col) * 2 + 1]] = true;
+
+  for (int row=0; row<size.height; row++)
+    for (int col=0; col<size.width; col++)
+      if (mask_point.val[0] != 0 &&
+          !is_referred[row][col] &&
+          (row != origin.x && col != origin.y)) {
+        std::vector <int> tmp(2, 0);
+        tmp[0] = come_from[(row * size.width + col) * 2 + 0];
+        tmp[1] = come_from[(row * size.width + col) * 2 + 1];
+        end_points.push_back(tmp);
       }
-    }
 
   // for each pixel, count how many path passes this pixel
   for (int i=0; i<end_points.size(); i++) {
@@ -123,8 +131,9 @@ int distanceField::countPaths(CvPoint origin, int *come_from) {
 
     while (come_from[cur_row * size.width + cur_col + 0] != -1) {
       path_count_array[cur_row][cur_col]++;
-      cur_row = come_from[cur_row * size.width + cur_col + 0];
-      cur_col = come_from[cur_row * size.width + cur_col + 1];
+      int next_row = come_from[(cur_row * size.width + cur_col) * 2 + 0];
+      int next_col = come_from[(cur_row * size.width + cur_col) * 2 + 1];
+      cur_row = next_row, cur_col = next_col;
     }
   }
 
